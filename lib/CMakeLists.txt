@@ -16,4 +16,4 @@ list(
 )
 
 add_library(lua_lib STATIC ${LUA_SOURCES})
-target_include_directories(lua_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/${LUA_DIR}/src)
+target_include_directories(lua_lib INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/${LUA_DIR}/src)
