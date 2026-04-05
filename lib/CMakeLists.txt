@@ -12,7 +12,7 @@ file(GLOB LUA_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${LUA_DIR}/src/*.c")
 list(
     REMOVE_ITEM LUA_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/${LUA_DIR}/src/lua.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/${LUA_DIR}/src/lua.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/${LUA_DIR}/src/luac.c"
 )
 
 add_library(lua_lib STATIC ${LUA_SOURCES})
