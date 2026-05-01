@@ -5,6 +5,6 @@ add_executable(
 target_link_libraries(
     ${PROJECT_NAME} PRIVATE
     cxx_setup
-    lua_lib
+    lua_lib_core
 )
 

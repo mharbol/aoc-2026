@@ -16,5 +16,5 @@ list(
     "${LUA_SRC_DIR}/luac.c"
 )
 
-add_library(lua_lib STATIC ${LUA_SOURCES})
-target_include_directories(lua_lib INTERFACE ${LUA_SRC_DIR})
+add_library(lua_lib_core STATIC ${LUA_SOURCES})
+target_include_directories(lua_lib_core INTERFACE ${LUA_SRC_DIR})
