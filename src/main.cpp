@@ -16,6 +16,7 @@ int main() {
         lua_getglobal(L, "a");
         if (lua_isnumber(L, -1)) {
             float a_cpp = static_cast<float>(lua_tonumber(L, -1));
+            std::cout << "Command: \"" << cmd << "\"" << std::endl;
             std::cout << "a_cpp = " << a_cpp << std::endl;
         }
     } else {
