@@ -8,7 +8,7 @@ extern "C" {
 }
 
 int main() {
-    std::string cmd = "a = 7 + 11";
+    const std::string cmd = "a = 7 + 11";
     lua_State *L = luaL_newstate();
 
     const int ret = luaL_dostring(L, cmd.c_str());
