@@ -12,7 +12,7 @@ int main() {
     lua_State *L = luaL_newstate();
 
     const int ret = luaL_dostring(L, cmd.c_str());
-    if (ret == LUA_OK) {
+    if (LUA_OK == ret) {
         lua_getglobal(L, "a");
         if (lua_isnumber(L, -1)) {
             float a_cpp = static_cast<float>(lua_tonumber(L, -1));
