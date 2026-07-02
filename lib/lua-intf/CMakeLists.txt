@@ -6,11 +6,11 @@ project(
 )
 
 add_library(
-    lua_lib_intf
+    ${PROJECT_NAME}
     src/LuaIntf.cpp
 )
 
 target_include_directories(
-    lua_lib_intf PUBLIC
+    ${PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
