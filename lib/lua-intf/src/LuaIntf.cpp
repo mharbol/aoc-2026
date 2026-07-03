@@ -1,4 +1,2 @@
+#include "LuaIntf.h"
 
-int stuff() {
-    return 1;
-}
