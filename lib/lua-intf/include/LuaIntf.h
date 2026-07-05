@@ -34,6 +34,14 @@ public:
         luaL_openlibs(L);
     }
 
+    inline void openIO() {
+        luaL_openselectedlibs(L, LUA_IOLIBK , 0);
+    }
+
+    inline void openBase() {
+        luaopen_base(L);
+    }
+
     lua_State *L;
 };
 } // namespace aoc::lua

@@ -4,6 +4,7 @@
 #include <string>
 
 extern "C" {
+#include "lauxlib.h"
 #include "lua.h"
 }
 
@@ -32,6 +33,24 @@ int main() {
     } else {
         const std::string err = lua_tostring(intf.L, -1);
         std::cerr << err << std::endl;
+    }
+    luaL_dofile(intf.L, "lua/myscript.lua");
+    lua_getglobal(intf.L, "a");
+    std::cout << "from file: " << intf.getHeadString() << std::endl;
+
+    intf.openBase();
+    // calling a lua function...
+    const std::string func = "AddStuff";
+    constexpr float a = 3.5f;
+    constexpr float b = 7.1f;
+    lua_getglobal(intf.L, func.c_str());
+    if (lua_isfunction(intf.L, -1)) {
+        lua_pushnumber(intf.L, a);
+        lua_pushnumber(intf.L, b);
+        lua_pcall(intf.L, 2, 1, 0);
+        const auto ret = static_cast<float>(lua_tonumber(intf.L, -1));
+        std::cout << "Called AddStuff with a = " << a << " and b = " << b
+                  << " and got return: " << ret << "." << std::endl;
     }
     return 0;
 }
