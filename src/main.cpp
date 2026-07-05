@@ -4,17 +4,17 @@
 #include <string>
 
 extern "C" {
-#include "lauxlib.h"
 #include "lua.h"
 }
 
 int main() {
+
     aoc::LuaIntf intf{};
     const std::string cmd = "a = 7 + 11";
 
-    const int ret = luaL_dostring(intf.L, cmd.c_str());
+    const auto ok = intf.doString(cmd);
 
-    if (LUA_OK == ret) {
+    if (ok) {
         lua_getglobal(intf.L, "a");
         if (lua_isnumber(intf.L, -1)) {
 
@@ -32,7 +32,5 @@ int main() {
         const std::string err = lua_tostring(intf.L, -1);
         std::cerr << err << std::endl;
     }
-
-    lua_close(intf.L);
     return 0;
 }
