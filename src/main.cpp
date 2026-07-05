@@ -9,8 +9,9 @@ extern "C" {
 
 int main() {
 
-    aoc::LuaIntf intf{};
-    const std::string cmd = "a = 7 + 11";
+    aoc::lua::LuaIntf intf{};
+
+    const std::string cmd = "local b = 7\na = b + 11";
 
     const auto ok = intf.doString(cmd);
 
