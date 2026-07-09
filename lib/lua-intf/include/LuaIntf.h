@@ -30,16 +30,10 @@ public:
         return std::string(str, len);
     }
 
-    inline void openLibs() {
-        luaL_openlibs(L);
-    }
-
-    inline void openIO() {
-        luaL_openselectedlibs(L, LUA_IOLIBK , 0);
-    }
-
-    inline void openBase() {
+    inline void openBaseLibs() {
         luaopen_base(L);
+        luaL_requiref(L, LUA_TABLIBNAME, luaopen_table, 1);
+        lua_pop(L, 1);
     }
 
     lua_State *L;
