@@ -34,11 +34,19 @@ int main() {
         const std::string err = lua_tostring(intf.L, -1);
         std::cerr << err << std::endl;
     }
-    luaL_dofile(intf.L, "lua/myscript.lua");
+
+    intf.openBaseLibs();
+
+    if (LUA_OK == luaL_dofile(intf.L, "lua/myscript.lua")) {
+        // nothing
+    } else {
+        std::cerr << lua_tostring(intf.L, -1) << std::endl;
+        return 1;
+    }
+
     lua_getglobal(intf.L, "a");
     std::cout << "from file: " << intf.getHeadString() << std::endl;
 
-    intf.openBaseLibs();
     // calling a lua function...
     const std::string func = "AddStuff";
     constexpr float a = 3.5f;

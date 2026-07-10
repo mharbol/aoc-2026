@@ -34,6 +34,8 @@ public:
         luaopen_base(L);
         luaL_requiref(L, LUA_TABLIBNAME, luaopen_table, 1);
         lua_pop(L, 1);
+        luaL_requiref(L, LUA_LOADLIBNAME, luaopen_package, 1);
+        lua_pop(L, 1);
     }
 
     lua_State *L;
