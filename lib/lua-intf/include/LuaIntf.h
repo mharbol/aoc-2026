@@ -3,6 +3,7 @@
 #define __AOC_LUA_INTF_H__
 
 #include <cstddef>
+#include <expected>
 #include <string>
 
 extern "C" {
@@ -13,6 +14,8 @@ extern "C" {
 
 namespace aoc::lua {
 class LuaIntf {
+    lua_State *const L;
+
 public:
     inline LuaIntf() : L(luaL_newstate()) {};
 
@@ -30,15 +33,23 @@ public:
         return std::string(str, len);
     }
 
+    inline void luaPop(size_t pop) {
+        lua_pop(L, pop);
+    }
+
     inline void openBaseLibs() {
         luaopen_base(L);
         luaL_requiref(L, LUA_TABLIBNAME, luaopen_table, 1);
-        lua_pop(L, 1);
         luaL_requiref(L, LUA_LOADLIBNAME, luaopen_package, 1);
-        lua_pop(L, 1);
+        luaPop(2);
     }
 
-    lua_State *L;
+    lua_State *getL() {
+        return L;
+    }
+
+    template <class T>
+    std::expected<T, std::string> getGlobal(const std::string &var);
 };
 } // namespace aoc::lua
 #endif // __AOC_LUA_INTF_H__

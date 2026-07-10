@@ -1,5 +1,5 @@
 
--- require('hey')
+local hey = require('hey')
 
 local a = 7 + 11
 a = a + 100
@@ -8,6 +8,8 @@ function AddStuff(x, y)
     print("[LUA] AddStuff(" .. x .. ", " .. y .. ") called.\n")
     return x + y
 end
+
+hey.test()
 
 function MySort()
     local t = { 5, 4, 3, 2, 1 }
