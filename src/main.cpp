@@ -31,6 +31,9 @@ int main() {
             const auto a_cpp_e = intf.getGlobal<float>("a");
             std::cout << "a_cpp_e      = " << a_cpp_e.value() << std::endl;
 
+            const auto a_cpp_E = intf.getGlobal<int>("a");
+            std::cout << "a_cpp_E      = " << a_cpp_E.value() << std::endl;
+
             size_t len;
             const char *a_cpp_str = lua_tolstring(intf.getL(), -1, &len);
             const std::string a_cpp_string(a_cpp_str, len);
