@@ -23,13 +23,13 @@ int main() {
             std::cout << "Command: \"" << cmd << "\"" << std::endl;
 
             const auto a_cpp_f = static_cast<float>(lua_tonumber(intf.getL(), -1));
-            std::cout << "a_cpp_f        = " << a_cpp_f << std::endl;
+            std::cout << "a_cpp_f      = " << a_cpp_f << std::endl;
 
             const auto a_cpp_i = static_cast<int32_t>(lua_tonumber(intf.getL(), -1));
-            std::cout << "a_cpp_i        = " << a_cpp_i << std::endl;
+            std::cout << "a_cpp_i      = " << a_cpp_i << std::endl;
 
             const auto a_cpp_e = intf.getGlobal<float>("a");
-            std::cout << "a_cpp_e        = " << a_cpp_e.value() << std::endl;
+            std::cout << "a_cpp_e      = " << a_cpp_e.value() << std::endl;
 
             size_t len;
             const char *a_cpp_str = lua_tolstring(intf.getL(), -1, &len);

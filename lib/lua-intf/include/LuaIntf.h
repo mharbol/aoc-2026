@@ -48,7 +48,7 @@ public:
         return L;
     }
 
-    template <class T>
+    template <class T, typename Enable = void>
     std::expected<T, std::string> getGlobal(const std::string &var);
 };
 } // namespace aoc::lua
