@@ -52,5 +52,7 @@ public:
     std::expected<T, std::string> getGlobal(const std::string &var);
 };
 } // namespace aoc::lua
+
 #include "LuaIntf.ipp"
+
 #endif // __AOC_LUA_INTF_H__

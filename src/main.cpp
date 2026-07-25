@@ -31,7 +31,7 @@ int main() {
             const auto a_cpp_e = intf.getGlobal<float>("a");
             std::cout << "a_cpp_e      = " << a_cpp_e.value() << std::endl;
 
-            const auto a_cpp_E = intf.getGlobal<int>("a");
+            const auto a_cpp_E = intf.getGlobal<int32_t>("a");
             std::cout << "a_cpp_E      = " << a_cpp_E.value() << std::endl;
 
             size_t len;
