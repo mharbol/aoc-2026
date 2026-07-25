@@ -3,8 +3,6 @@
 
 namespace aoc::lua {
 
-class LuaIntf;
-
 template <class T>
 std::expected<T, std::string> LuaIntf::getGlobal(const std::string &var) {
     std::expected<T, std::string> ret;
