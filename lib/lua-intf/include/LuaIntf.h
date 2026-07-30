@@ -5,46 +5,38 @@
 #include <cstddef>
 #include <expected>
 #include <string>
+#include <utility>
 
 extern "C" {
 #include "lauxlib.h"
 #include "lua.h"
-#include "lualib.h"
 }
 
 namespace aoc::lua {
 class LuaIntf {
-    lua_State *const L;
+    lua_State *L;
 
 public:
-    inline LuaIntf() : L(luaL_newstate()) {};
+    LuaIntf() : L(luaL_newstate()) {};
 
-    inline virtual ~LuaIntf() {
+    ~LuaIntf() {
         lua_close(L);
     };
+    LuaIntf &operator=(LuaIntf &&other) noexcept {
+        std::swap(L, other.L);
+        return *this;
+    };
+    LuaIntf(LuaIntf &&other) noexcept : L(std::exchange(other.L, nullptr)) {};
+    LuaIntf(const LuaIntf &) = delete;
+    LuaIntf &operator=(const LuaIntf &) = delete;
 
-    inline bool doString(const std::string &cmd) {
-        return LUA_OK == luaL_dostring(L, cmd.c_str());
-    }
+    void openBaseLibs();
+    bool doString(const std::string &cmd);
+    std::string getHeadString();
+    void luaPop(size_t pop);
 
-    inline std::string getHeadString() {
-        size_t len;
-        const char *str = lua_tolstring(L, -1, &len);
-        return std::string(str, len);
-    }
-
-    inline void luaPop(size_t pop) {
-        lua_pop(L, pop);
-    }
-
-    inline void openBaseLibs() {
-        luaopen_base(L);
-        luaL_requiref(L, LUA_TABLIBNAME, luaopen_table, 1);
-        luaL_requiref(L, LUA_LOADLIBNAME, luaopen_package, 1);
-        luaPop(2);
-    }
-
-    lua_State *getL() {
+    // TODO remove this eventually
+    inline lua_State *getL() {
         return L;
     }
 
