@@ -57,7 +57,7 @@ int main() {
     lua_getglobal(intf.getL(), "a");
     std::cout << "from file: " << intf.getHeadString() << std::endl;
 
-    // calling a lua function...
+    // calling some lua functions...
     const std::string func = "AddStuff";
     constexpr float a = 3.5f;
     constexpr float b = 7.1f;
@@ -70,8 +70,16 @@ int main() {
         std::cout << "Called AddStuff with a = " << a << " and b = " << b
                   << " and got return: " << ret << "." << std::endl;
     }
+
     const std::string other_func = "MySort";
     lua_getglobal(intf.getL(), other_func.c_str());
     lua_pcall(intf.getL(), 0, 0, 0);
+
+    constexpr auto path_func = "PrintPath";
+    lua_getglobal(intf.getL(), path_func);
+    if (lua_isfunction(intf.getL(), -1)) {
+        lua_pcall(intf.getL(), 0, 0, 0);
+    }
+
     return 0;
 }

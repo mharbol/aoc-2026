@@ -16,5 +16,8 @@ function MySort()
     print(t[1] .. ", " .. t[2] .. ", " .. t[3] .. ", " .. t[4] .. ", " .. t[5])
     table.sort(t)
     print(t[1] .. ", " .. t[2] .. ", " .. t[3] .. ", " .. t[4] .. ", " .. t[5])
+end
+
+function PrintPath()
     print(package.path)
 end
