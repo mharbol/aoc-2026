@@ -67,6 +67,7 @@ int main() {
         lua_pushnumber(intf.getL(), a);
         lua_pushnumber(intf.getL(), b);
         lua_pcall(intf.getL(), 2, 1, 0);
+
         const auto ret = static_cast<float>(lua_tonumber(intf.getL(), -1));
         std::cout << "Called AddStuff with a = " << a << " and b = " << b
                   << " and got return: " << ret << "." << std::endl;
@@ -76,14 +77,7 @@ int main() {
     lua_getglobal(intf.getL(), other_func.c_str());
     lua_pcall(intf.getL(), 0, 0, 0);
 
-    constexpr auto path_func = "PrintPath";
-    lua_getglobal(intf.getL(), path_func);
-    if (lua_isfunction(intf.getL(), -1)) {
-        lua_pcall(intf.getL(), 0, 0, 0);
-    }
-
-
-    lua_getglobal(intf.getL(), path_func);
+    lua_getglobal(intf.getL(), "PrintPath");
     if (lua_isfunction(intf.getL(), -1)) {
         lua_pcall(intf.getL(), 0, 0, 0);
     }
