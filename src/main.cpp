@@ -77,7 +77,8 @@ int main() {
     lua_getglobal(intf.getL(), other_func.c_str());
     lua_pcall(intf.getL(), 0, 0, 0);
 
-    lua_getglobal(intf.getL(), "PrintPath");
+    constexpr auto path_func = "PrintPath";
+    lua_getglobal(intf.getL(), path_func);
     if (lua_isfunction(intf.getL(), -1)) {
         lua_pcall(intf.getL(), 0, 0, 0);
     }
