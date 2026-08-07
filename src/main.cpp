@@ -81,5 +81,12 @@ int main() {
         lua_pcall(intf.getL(), 0, 0, 0);
     }
 
+    intf.appendPath(";./lua/?.lua;./lua/?/init.lua");
+
+    lua_getglobal(intf.getL(), path_func);
+    if (lua_isfunction(intf.getL(), -1)) {
+        lua_pcall(intf.getL(), 0, 0, 0);
+    }
+
     return 0;
 }

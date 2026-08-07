@@ -35,6 +35,8 @@ public:
     std::string getHeadString();
     void luaPop(size_t pop);
 
+    void appendPath(const std::string &path);
+
     // TODO remove this eventually
     inline lua_State *getL() {
         return L;

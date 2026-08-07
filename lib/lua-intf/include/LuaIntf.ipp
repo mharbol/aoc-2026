@@ -1,5 +1,6 @@
 
 #include "LuaIntf.h"
+#include <string>
 
 extern "C" {
 #include "lualib.h"
@@ -26,6 +27,15 @@ inline void LuaIntf::openBaseLibs() {
     luaL_requiref(L, LUA_TABLIBNAME, luaopen_table, 1);
     luaL_requiref(L, LUA_LOADLIBNAME, luaopen_package, 1);
     luaPop(2);
+}
+
+inline void LuaIntf::appendPath(const std::string &path) {
+    lua_getglobal(L, "package");
+    lua_getfield(L, -1, "path");
+    lua_pushstring(L, path.c_str());
+    lua_concat(L, 2);
+    lua_setfield(L, -2, "path");
+    lua_pop(L, 1);
 }
 
 template <class T>
