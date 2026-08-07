@@ -46,6 +46,7 @@ int main() {
     lua_pop(intf.getL(), 1);
 
     intf.openBaseLibs();
+    intf.appendPath(";./lua/?.lua;./lua/?/init.lua");
 
     if (LUA_OK == luaL_dofile(intf.getL(), "lua/myscript.lua")) {
         // nothing
@@ -81,7 +82,6 @@ int main() {
         lua_pcall(intf.getL(), 0, 0, 0);
     }
 
-    intf.appendPath(";./lua/?.lua;./lua/?/init.lua");
 
     lua_getglobal(intf.getL(), path_func);
     if (lua_isfunction(intf.getL(), -1)) {
