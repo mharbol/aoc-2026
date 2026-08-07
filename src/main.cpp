@@ -59,10 +59,10 @@ int main() {
     std::cout << "from file: " << intf.getHeadString() << std::endl;
 
     // calling some lua functions...
-    const std::string func = "AddStuff";
+    const std::string add_stuff = "AddStuff";
     constexpr float a = 3.5f;
     constexpr float b = 7.1f;
-    lua_getglobal(intf.getL(), func.c_str());
+    lua_getglobal(intf.getL(), add_stuff.c_str());
     if (lua_isfunction(intf.getL(), -1)) {
         lua_pushnumber(intf.getL(), a);
         lua_pushnumber(intf.getL(), b);
