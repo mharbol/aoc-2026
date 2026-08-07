@@ -24,3 +24,4 @@ target_include_directories(cxx_setup INTERFACE ${PROJECT_SOURCE_DIR}/include)
 
 add_subdirectory(src)
 add_subdirectory(lib)
+add_subdirectory(test)

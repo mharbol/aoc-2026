@@ -1,0 +1,36 @@
+
+include(FetchContent)
+FetchContent_Declare(
+    googletest
+    DOWNLOAD_EXTRACT_TIMESTAMP true
+    URL https://github.com/google/googletest/archive/refs/tags/v1.17.0.zip 
+)
+block()
+    set(CMAKE_CXX_STANDARD 17) # setting to c++17 for gtest macos builds
+    # For Windows: Prevent overriding the parent project's compiler/linker settings
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    set(BUILD_GMOCK OFF)
+    FetchContent_MakeAvailable(googletest)
+endblock()
+
+add_library(test_setup INTERFACE)
+
+enable_testing()
+
+add_executable(
+    aoc_test
+    test_LuaIntf.cpp
+)
+
+# target_include_directories(test_setup INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+target_link_libraries(
+    aoc_test
+    test_setup
+    cxx_setup
+    lua_lib_intf
+    GTest::gtest_main
+)
+
+include(GoogleTest)
+gtest_discover_tests(aoc_test)
