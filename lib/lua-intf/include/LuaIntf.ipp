@@ -38,7 +38,7 @@ inline void LuaIntf::appendPath(const std::string &path) {
     lua_pop(L, 1);
 }
 
-template <class T>
+template <typename T>
 std::expected<T, std::string> LuaIntf::getGlobal(const std::string &var) {
     std::expected<T, std::string> ret;
     lua_getglobal(L, var.c_str());
