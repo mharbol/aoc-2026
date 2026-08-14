@@ -48,10 +48,9 @@ int main() {
     intf.openBaseLibs();
     intf.appendPath(";./lua/?.lua;./lua/?/init.lua");
 
-    if (LUA_OK == luaL_dofile(intf.getL(), "lua/myscript.lua")) {
-        // nothing
-    } else {
+    if (LUA_OK != luaL_dofile(intf.getL(), "lua/myscript.lua")) {
         std::cerr << lua_tostring(intf.getL(), -1) << std::endl;
+        // TODO probably pop but also we're ending sooo......
         return 1;
     }
 
