@@ -14,7 +14,7 @@ int main() {
 
     const std::string cmd = "local b = 7\na = b + 11";
 
-    const auto ok = intf.doString(cmd);
+    const auto ok = intf.luaDoString(cmd);
 
     if (ok) {
         lua_getglobal(intf.getL(), "a");
@@ -23,21 +23,20 @@ int main() {
             std::cout << "Command: \"" << cmd << "\"" << std::endl;
 
             const auto a_cpp_f = static_cast<float>(lua_tonumber(intf.getL(), -1));
-            std::cout << "a_cpp_f      = " << a_cpp_f << std::endl;
+            std::cout << "a_cpp_f = " << a_cpp_f << std::endl;
 
             const auto a_cpp_i = static_cast<int32_t>(lua_tonumber(intf.getL(), -1));
-            std::cout << "a_cpp_i      = " << a_cpp_i << std::endl;
+            std::cout << "a_cpp_i = " << a_cpp_i << std::endl;
 
             const auto a_cpp_e = intf.getGlobal<float>("a");
-            std::cout << "a_cpp_e      = " << a_cpp_e.value() << std::endl;
+            std::cout << "a_cpp_e = " << a_cpp_e.value() << std::endl;
 
             const auto a_cpp_E = intf.getGlobal<int32_t>("a");
-            std::cout << "a_cpp_E      = " << a_cpp_E.value() << std::endl;
+            std::cout << "a_cpp_E = " << a_cpp_E.value() << std::endl;
 
-            size_t len;
-            const char *a_cpp_str = lua_tolstring(intf.getL(), -1, &len);
-            const std::string a_cpp_string(a_cpp_str, len);
-            std::cout << "a_cpp_string = " << a_cpp_string << std::endl;
+            static const char *A = "a";
+            const auto a_cpp_S = intf.getGlobal<std::string>(A);
+            std::cout << "a_cpp_S = " << a_cpp_S.value() << std::endl;
         }
     } else {
         const std::string err = lua_tostring(intf.getL(), -1);

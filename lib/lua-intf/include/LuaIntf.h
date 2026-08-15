@@ -31,7 +31,7 @@ public:
     LuaIntf &operator=(const LuaIntf &) = delete;
 
     void openBaseLibs();
-    bool doString(const std::string &cmd);
+    bool luaDoString(const std::string &cmd);
     std::string getHeadString();
     void luaPop(size_t pop);
 

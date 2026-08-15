@@ -8,7 +8,7 @@ extern "C" {
 
 namespace aoc::lua {
 
-inline bool LuaIntf::doString(const std::string &cmd) {
+inline bool LuaIntf::luaDoString(const std::string &cmd) {
     return LUA_OK == luaL_dostring(L, cmd.c_str());
 }
 
@@ -35,7 +35,20 @@ inline void LuaIntf::appendPath(const std::string &path) {
     lua_pushstring(L, path.c_str());
     lua_concat(L, 2);
     lua_setfield(L, -2, "path");
-    lua_pop(L, 1);
+    luaPop(1);
+}
+
+template <>
+std::expected<std::string, std::string> LuaIntf::getGlobal(const std::string &var) {
+    std::expected<std::string, std::string> ret;
+    lua_getglobal(L, var.c_str());
+    if (lua_isstring(L, -1)) {
+        ret = lua_tostring(L, -1);
+    } else {
+        ret = std::unexpected(lua_tostring(L, -1));
+    }
+    luaPop(1);
+    return ret;
 }
 
 template <typename T>
