@@ -4,11 +4,6 @@
 #include "LuaIntf.h"
 #include "LuaIntfTest.h"
 
-TEST(TestLua, CreateIntf) {
-    aoc::lua::LuaIntf _{};
-    SUCCEED();
-}
-
 TEST_F(LuaIntfTest, TestBasicDoString) {
     intf.luaDoString("a = 2 + 2");
     const auto a = intf.getGlobal<int32_t>("a");
