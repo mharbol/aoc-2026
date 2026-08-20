@@ -14,6 +14,7 @@ block()
 endblock()
 
 add_library(test_setup INTERFACE)
+target_include_directories(test_setup INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 enable_testing()
 

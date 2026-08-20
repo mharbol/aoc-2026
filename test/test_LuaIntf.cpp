@@ -2,12 +2,16 @@
 #include <gtest/gtest.h>
 
 #include "LuaIntf.h"
+#include "LuaIntfTest.h"
 
-TEST(TestHello, Hello) {
-    ASSERT_EQ(2, 1 + 1) << "This should clearly be 2";
-}
-
-TEST(TestHello, CreateIntf) {
+TEST(TestLua, CreateIntf) {
     aoc::lua::LuaIntf _{};
     SUCCEED();
+}
+
+TEST_F(LuaIntfTest, TestBasicDoString) {
+    intf.luaDoString("a = 2 + 2");
+    const auto a = intf.getGlobal<int32_t>("a");
+    ASSERT_TRUE(a.has_value()) << "Expect 'a' should be a global value";
+    ASSERT_EQ(4, a.value()) << "Expect 'a' should be 4";
 }
