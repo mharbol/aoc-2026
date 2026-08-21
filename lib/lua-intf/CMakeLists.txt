@@ -7,5 +7,5 @@ project(
 
 add_subdirectory(src)
 
-target_include_directories(lua_lib_intf PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(lua_lib_intf lua_lib_core)
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(${PROJECT_NAME} lua_lib_core)

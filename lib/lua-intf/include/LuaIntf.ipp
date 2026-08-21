@@ -1,5 +1,7 @@
 
 #include "LuaIntf.h"
+#include "lua.h"
+#include <expected>
 #include <string>
 
 extern "C" {
@@ -62,5 +64,42 @@ std::expected<T, std::string> LuaIntf::getGlobal(const std::string &var) {
     }
     luaPop(1);
     return ret;
+}
+
+// right now just single return of number type
+// and number args
+template <typename ReturnT, typename... Args>
+std::expected<ReturnT, std::string> LuaIntf::callLuaFunc(const std::string &function,
+    Args... args) {
+
+    std::expected<ReturnT, std::string> ret;
+
+    lua_getglobal(L, function.c_str());
+    if (!lua_isfunction(L, -1)) {
+        ret = std::unexpected(lua_tostring(L, -1));
+        luaPop(1);
+        return ret;
+    }
+
+    constexpr size_t nargs = sizeof...(Args);
+    constexpr size_t nrets = 1; // TODO
+
+    // this will be replaced with luaPush()
+    ((lua_pushnumber(L, args)), ...);
+
+    if (LUA_OK != lua_pcall(L, nargs, 1, 0)) {
+        ret = std::unexpected(lua_tostring(L, -1));
+        luaPop(1);
+        return ret;
+    } else if (lua_isnumber(L, -1)) { // figure out validation on this one...
+        // also figure out multi-return for tuples
+        ret = static_cast<ReturnT>(lua_tonumber(L, -1));
+        luaPop(1);
+        return ret;
+    } else {
+        ret = std::unexpected(lua_tostring(L, -1));
+        luaPop(nrets);
+        return ret;
+    }
 }
 } // namespace aoc::lua
