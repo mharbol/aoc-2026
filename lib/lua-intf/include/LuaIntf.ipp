@@ -1,6 +1,5 @@
 
 #include "LuaIntf.h"
-#include "lua.h"
 #include <expected>
 #include <string>
 #include <type_traits>
@@ -104,7 +103,6 @@ void LuaIntf::pushStack(const T var) {
 }
 
 // right now just single return of number type
-// and number args
 template <typename ReturnT, typename... Args>
 std::expected<ReturnT, std::string> LuaIntf::call(const std::string &function, Args... args) {
 
