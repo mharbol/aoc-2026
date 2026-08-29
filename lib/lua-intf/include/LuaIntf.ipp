@@ -121,8 +121,8 @@ std::expected<ReturnT, std::string> LuaIntf::call(const std::string &function, A
     constexpr size_t nargs = sizeof...(Args);
     constexpr size_t nrets = 1; // TODO
 
-    // this will be replaced with pushStack()
-    ((lua_pushnumber(L, args)), ...);
+    // this may need to be fixed...
+    ((pushStack(std::remove_reference_t<Args &>(args))), ...);
 
     if (LUA_OK != lua_pcall(L, nargs, 1, 0)) {
         ret = std::unexpected(lua_tostring(L, -1));
