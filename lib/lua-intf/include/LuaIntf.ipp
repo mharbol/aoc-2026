@@ -108,6 +108,9 @@ void LuaIntf::pushStack(const T var) {
 template <typename ReturnT, typename... Args>
 std::expected<ReturnT, std::string> LuaIntf::call(const std::string &function, Args... args) {
 
+    constexpr size_t nargs = sizeof...(Args);
+    constexpr size_t nrets = 1; // TODO
+
     std::expected<ReturnT, std::string> ret;
 
     lua_getglobal(L, function.c_str());
@@ -117,11 +120,6 @@ std::expected<ReturnT, std::string> LuaIntf::call(const std::string &function, A
         return ret;
     }
 
-    constexpr size_t nargs = sizeof...(Args);
-    constexpr size_t nrets = 1; // TODO
-
-    // this may need to be fixed...
-    // ((pushStack(std::remove_reference_t<Args &>(args))), ...);
     ((pushStack(args)), ...);
 
     if (LUA_OK != lua_pcall(L, nargs, 1, 0)) {

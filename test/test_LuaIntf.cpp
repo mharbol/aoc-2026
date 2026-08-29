@@ -56,3 +56,10 @@ TEST_F(LuaIntfTest, TestCallNoArgsFunction) {
     ASSERT_TRUE(ret.has_value()) << "Expect ret should be a value";
     ASSERT_EQ(10, ret.value());
 }
+
+TEST_F(LuaIntfTest, TestCallStringFunction) {
+    LUA_DO_STRING("function retVal(a) return #a end");
+    auto ret = intf.call<uint32_t>("retVal", "0123456789");
+    ASSERT_TRUE(ret.has_value()) << "Expect ret should be a value";
+    ASSERT_EQ(10, ret.value());
+}
