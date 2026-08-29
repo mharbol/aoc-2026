@@ -11,6 +11,7 @@ TEST_F(LuaIntfTest, TestPushPopStack) {
     const std::string s = "hello";
     intf.pushStack(s);
     intf.pushStack("hey");
+    intf.pushStack(nullptr);
 }
 
 TEST_F(LuaIntfTest, TestBasicDoString) {

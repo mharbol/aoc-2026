@@ -75,16 +75,15 @@ std::expected<T, std::string> LuaIntf::getGlobal(const std::string &var) {
     return ret;
 }
 
-// TODO, improve this with better template practices
+// TODO: improve this with better template practices
 template <typename T>
 void LuaIntf::pushStack(T &&var) {
-    if constexpr (std::is_same_v<T, bool>) {
+    if constexpr (std::is_null_pointer_v<T>) {
+        lua_pushnil(L);
+    } else if constexpr (std::is_same_v<T, bool>) {
         lua_pushboolean(L, std::forward<T>(var));
-    }
-    if constexpr (std::is_integral_v<T>) {
+    } else if constexpr (std::is_integral_v<T>) {
         lua_pushinteger(L, std::forward<T>(var));
-    } else if constexpr (std::is_floating_point_v<T>) {
-        lua_pushnumber(L, std::forward<T>(var));
     } else if constexpr (std::is_floating_point_v<T>) {
         lua_pushnumber(L, std::forward<T>(var));
     } else {
