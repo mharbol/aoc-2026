@@ -69,8 +69,7 @@ std::expected<T, std::string> LuaIntf::getGlobal(const std::string &var) {
 // right now just single return of number type
 // and number args
 template <typename ReturnT, typename... Args>
-std::expected<ReturnT, std::string> LuaIntf::callLuaFunc(const std::string &function,
-    Args... args) {
+std::expected<ReturnT, std::string> LuaIntf::call(const std::string &function, Args... args) {
 
     std::expected<ReturnT, std::string> ret;
 

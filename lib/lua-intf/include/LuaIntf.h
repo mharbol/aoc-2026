@@ -47,7 +47,7 @@ public:
     std::expected<T, std::string> getGlobal(const std::string &var);
 
     template <typename ReturnT, typename... Args>
-    std::expected<ReturnT, std::string> callLuaFunc(const std::string &function, Args... args);
+    std::expected<ReturnT, std::string> call(const std::string &function, Args... args);
 };
 } // namespace aoc::lua
 
