@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <expected>
 #include <string>
+#include <type_traits>
 #include <utility>
 
 extern "C" {
@@ -33,21 +34,35 @@ public:
     void openBaseLibs();
     bool luaDoString(const std::string &cmd);
     std::string getHeadAsString();
+
+    size_t getStackSize();
+
     void luaPop(size_t pop);
-    // void luaPush(size_t pop); // TODO
 
     void appendPath(const std::string &path);
 
-    // TODO remove this eventually
-    inline lua_State *getL() {
-        return L;
-    }
+    template <typename T>
+    void pushStack(T &&var);
+
+    template <typename T>
+        requires std::same_as<std::decay_t<T>, std::string>
+    void pushStack(T &&var);
+
+    template <typename T>
+        requires std::same_as<std::decay_t<T>, char *> ||
+                 std::same_as<std::decay_t<T>, const char *>
+    void pushStack(T &&var);
 
     template <typename T>
     std::expected<T, std::string> getGlobal(const std::string &var);
 
     template <typename ReturnT, typename... Args>
     std::expected<ReturnT, std::string> call(const std::string &function, Args... args);
+
+    // TODO remove this eventually
+    inline lua_State *getL() {
+        return L;
+    }
 };
 } // namespace aoc::lua
 

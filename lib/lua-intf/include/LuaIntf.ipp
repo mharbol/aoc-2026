@@ -3,12 +3,17 @@
 #include "lua.h"
 #include <expected>
 #include <string>
+#include <type_traits>
+#include <utility>
 
 extern "C" {
 #include "lualib.h"
 }
 
 namespace aoc::lua {
+
+template <typename...>
+static constexpr bool dependent_false_v = false;
 
 inline bool LuaIntf::luaDoString(const std::string &cmd) {
     return LUA_OK == luaL_dostring(L, cmd.c_str());
@@ -22,6 +27,10 @@ inline std::string LuaIntf::getHeadAsString() {
 
 inline void LuaIntf::luaPop(size_t pop) {
     lua_pop(L, pop);
+}
+
+inline size_t LuaIntf::getStackSize() {
+    return static_cast<size_t>(lua_gettop(L));
 }
 
 inline void LuaIntf::openBaseLibs() {
@@ -66,6 +75,36 @@ std::expected<T, std::string> LuaIntf::getGlobal(const std::string &var) {
     return ret;
 }
 
+// TODO, improve this with better template practices
+template <typename T>
+void LuaIntf::pushStack(T &&var) {
+    if constexpr (std::is_same_v<T, bool>) {
+        lua_pushboolean(L, std::forward<T>(var));
+    }
+    if constexpr (std::is_integral_v<T>) {
+        lua_pushinteger(L, std::forward<T>(var));
+    } else if constexpr (std::is_floating_point_v<T>) {
+        lua_pushnumber(L, std::forward<T>(var));
+    } else if constexpr (std::is_floating_point_v<T>) {
+        lua_pushnumber(L, std::forward<T>(var));
+    } else {
+        static_assert(dependent_false_v<T>, "Unsupported type");
+    }
+}
+
+template <typename T>
+    requires std::same_as<std::decay_t<T>, std::string>
+void LuaIntf::pushStack(T &&var) {
+    lua_pushlstring(L, var.c_str(), var.size());
+}
+
+template <typename T>
+    requires std::same_as<std::decay_t<T>, char *> ||
+             std::same_as<std::decay_t<T>, const char *>
+void LuaIntf::pushStack(T &&var) {
+    lua_pushstring(L, var);
+}
+
 // right now just single return of number type
 // and number args
 template <typename ReturnT, typename... Args>
@@ -83,7 +122,7 @@ std::expected<ReturnT, std::string> LuaIntf::call(const std::string &function, A
     constexpr size_t nargs = sizeof...(Args);
     constexpr size_t nrets = 1; // TODO
 
-    // this will be replaced with luaPush()
+    // this will be replaced with pushStack()
     ((lua_pushnumber(L, args)), ...);
 
     if (LUA_OK != lua_pcall(L, nargs, 1, 0)) {

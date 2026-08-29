@@ -4,6 +4,15 @@
 #include "LuaIntf.h"
 #include "LuaIntfTest.h"
 
+TEST_F(LuaIntfTest, TestPushPopStack) {
+    intf.pushStack(5);
+    intf.pushStack(1.5);
+    intf.pushStack(false);
+    const std::string s = "hello";
+    intf.pushStack(s);
+    intf.pushStack("hey");
+}
+
 TEST_F(LuaIntfTest, TestBasicDoString) {
     LUA_DO_STRING("a = 2 + 2");
     const auto a = intf.getGlobal<uint32_t>("a");
