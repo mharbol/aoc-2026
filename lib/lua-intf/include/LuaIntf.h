@@ -42,16 +42,18 @@ public:
     void appendPath(const std::string &path);
 
     template <typename T>
-    void pushStack(T &&var);
+        requires std::is_null_pointer_v<T> || std::is_integral_v<T> ||
+                 std::is_floating_point_v<T>
+    void pushStack(const T var);
 
     template <typename T>
         requires std::same_as<std::decay_t<T>, std::string>
-    void pushStack(T &&var);
+    void pushStack(const T &var);
 
     template <typename T>
         requires std::same_as<std::decay_t<T>, char *> ||
                  std::same_as<std::decay_t<T>, const char *>
-    void pushStack(T &&var);
+    void pushStack(const T var);
 
     template <typename T>
     std::expected<T, std::string> getGlobal(const std::string &var);

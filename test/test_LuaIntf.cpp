@@ -8,9 +8,9 @@ TEST_F(LuaIntfTest, TestPushPopStack) {
     intf.pushStack(5);
     intf.pushStack(1.5);
     intf.pushStack(false);
-    const std::string s = "hello";
-    intf.pushStack(s);
     intf.pushStack("hey");
+    std::string s = "hello";
+    intf.pushStack(s);
     intf.pushStack(nullptr);
 }
 

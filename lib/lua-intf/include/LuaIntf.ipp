@@ -4,7 +4,6 @@
 #include <expected>
 #include <string>
 #include <type_traits>
-#include <utility>
 
 extern "C" {
 #include "lualib.h"
@@ -75,17 +74,17 @@ std::expected<T, std::string> LuaIntf::getGlobal(const std::string &var) {
     return ret;
 }
 
-// TODO: improve this with better template practices
 template <typename T>
-void LuaIntf::pushStack(T &&var) {
+    requires std::is_null_pointer_v<T> || std::is_integral_v<T> || std::is_floating_point_v<T>
+void LuaIntf::pushStack(const T var) {
     if constexpr (std::is_null_pointer_v<T>) {
         lua_pushnil(L);
     } else if constexpr (std::is_same_v<T, bool>) {
-        lua_pushboolean(L, std::forward<T>(var));
+        lua_pushboolean(L, var);
     } else if constexpr (std::is_integral_v<T>) {
-        lua_pushinteger(L, std::forward<T>(var));
+        lua_pushinteger(L, var);
     } else if constexpr (std::is_floating_point_v<T>) {
-        lua_pushnumber(L, std::forward<T>(var));
+        lua_pushnumber(L, var);
     } else {
         static_assert(dependent_false_v<T>, "Unsupported type");
     }
@@ -93,14 +92,14 @@ void LuaIntf::pushStack(T &&var) {
 
 template <typename T>
     requires std::same_as<std::decay_t<T>, std::string>
-void LuaIntf::pushStack(T &&var) {
+void LuaIntf::pushStack(const T &var) {
     lua_pushlstring(L, var.c_str(), var.size());
 }
 
 template <typename T>
     requires std::same_as<std::decay_t<T>, char *> ||
              std::same_as<std::decay_t<T>, const char *>
-void LuaIntf::pushStack(T &&var) {
+void LuaIntf::pushStack(const T var) {
     lua_pushstring(L, var);
 }
 
@@ -122,7 +121,8 @@ std::expected<ReturnT, std::string> LuaIntf::call(const std::string &function, A
     constexpr size_t nrets = 1; // TODO
 
     // this may need to be fixed...
-    ((pushStack(std::remove_reference_t<Args &>(args))), ...);
+    // ((pushStack(std::remove_reference_t<Args &>(args))), ...);
+    ((pushStack(args)), ...);
 
     if (LUA_OK != lua_pcall(L, nargs, 1, 0)) {
         ret = std::unexpected(lua_tostring(L, -1));
