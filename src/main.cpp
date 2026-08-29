@@ -54,7 +54,7 @@ int main() {
     }
 
     lua_getglobal(intf.getL(), "a");
-    std::cout << "from file: " << intf.getHeadString() << std::endl;
+    std::cout << "from file: " << intf.getHeadAsString() << std::endl;
 
     // calling some lua functions...
     const std::string add_stuff = "AddStuff";

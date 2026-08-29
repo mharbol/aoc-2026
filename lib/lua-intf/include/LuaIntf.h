@@ -32,7 +32,7 @@ public:
 
     void openBaseLibs();
     bool luaDoString(const std::string &cmd);
-    std::string getHeadString();
+    std::string getHeadAsString();
     void luaPop(size_t pop);
     // void luaPush(size_t pop); // TODO
 
