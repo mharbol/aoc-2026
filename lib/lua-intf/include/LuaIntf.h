@@ -68,6 +68,9 @@ public:
     template <typename ReturnT, typename... Args>
     std::expected<ReturnT, std::string> call(const std::string &function, Args... args);
 
+    template <typename ReturnT>
+    std::expected<ReturnT, std::string> luaGetStack(const int stackIdx);
+
     // TODO remove this eventually
     inline lua_State *getL() {
         return L;

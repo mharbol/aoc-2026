@@ -70,3 +70,26 @@ TEST_F(LuaIntfTest, TestCallMixedFunction) {
     ASSERT_TRUE(ret.has_value()) << "Expect ret should be a value: " << ret.error();
     ASSERT_EQ(20, ret.value());
 }
+
+TEST_F(LuaIntfTest, TestLuaGetStack) {
+    intf.pushStack("hello"); // -4
+    intf.pushStack(1.0);     // -3
+    intf.pushStack(false);   // -2
+    intf.pushStack(10);      // -1
+
+    auto ret1 = intf.luaGetStack<int>(-1);
+    ASSERT_TRUE(ret1.has_value()) << "Expect ret1 should be a value: " << ret1.error();
+    ASSERT_EQ(10, ret1.value());
+
+    auto ret2 = intf.luaGetStack<bool>(-2);
+    ASSERT_TRUE(ret2.has_value()) << "Expect ret2 should be a value: " << ret2.error();
+    ASSERT_EQ(false, ret2.value());
+
+    auto ret3 = intf.luaGetStack<float>(-3);
+    ASSERT_TRUE(ret3.has_value()) << "Expect ret3 should be a value: " << ret3.error();
+    ASSERT_EQ(1.0, ret3.value());
+
+    auto ret4 = intf.luaGetStack<std::string>(-4);
+    ASSERT_TRUE(ret4.has_value()) << "Expect ret4 should be a value: " << ret4.error();
+    ASSERT_EQ("hello", ret4.value());
+}

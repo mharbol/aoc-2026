@@ -135,4 +135,40 @@ std::expected<ReturnT, std::string> LuaIntf::call(const std::string &function, A
         return ret;
     }
 }
+
+// TODO maybe do the returns and checks a little better...
+template <typename ReturnT>
+std::expected<ReturnT, std::string> LuaIntf::luaGetStack(const int stackIdx) {
+    if constexpr (std::is_same_v<ReturnT, bool>) {
+        if (lua_isboolean(L, stackIdx)) {
+            return lua_toboolean(L, stackIdx);
+        } else {
+            return std::unexpected("Expected bool but got: " +
+                                   std::string(lua_typename(L, lua_type(L, stackIdx))));
+        }
+    } else if constexpr (std::is_integral_v<ReturnT>) {
+        if (lua_isinteger(L, stackIdx)) {
+            return static_cast<ReturnT>(lua_tointeger(L, stackIdx));
+        } else {
+            return std::unexpected("Expected int type but got: " +
+                                   std::string(lua_typename(L, lua_type(L, stackIdx))));
+        }
+    } else if constexpr (std::is_floating_point_v<ReturnT>) {
+        if (lua_isnumber(L, stackIdx)) {
+            return static_cast<ReturnT>(lua_tonumber(L, stackIdx));
+        } else {
+            return std::unexpected("Expected float type but got: " +
+                                   std::string(lua_typename(L, lua_type(L, stackIdx))));
+        }
+    } else if constexpr (std::is_same_v<ReturnT, std::string>) {
+        if (lua_isstring(L, stackIdx)) {
+            return lua_tostring(L, stackIdx);
+        } else {
+            return std::unexpected("Expected string type but got: " +
+                                   std::string(lua_typename(L, lua_type(L, stackIdx))));
+        }
+    } else {
+        static_assert(dependent_false_v<ReturnT>, "Unsupported return type");
+    }
+}
 } // namespace aoc::lua
