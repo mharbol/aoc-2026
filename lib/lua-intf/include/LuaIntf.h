@@ -31,15 +31,25 @@ public:
     };
     LuaIntf(LuaIntf &&other) noexcept : L(std::exchange(other.L, nullptr)) {};
 
-    void openBaseLibs();
-    bool luaDoString(const std::string &cmd);
+    // TODO redo this one
+    template <typename T>
+    std::expected<T, std::string> getGlobal(const std::string &var);
+
+    // TODO redo this one
     std::string getHeadAsString();
+
+    // TODO update for failed exec
+    bool luaDoString(const std::string &cmd);
+
+    // TODO (maybe) improve the path stuff... maybe
+    void appendPath(const std::string &path);
+
+    // TODO really good doc
+    void openBaseLibs();
 
     size_t getStackSize();
 
     void luaPop(size_t pop);
-
-    void appendPath(const std::string &path);
 
     template <typename T>
         requires std::is_null_pointer_v<T> || std::is_integral_v<T> ||
@@ -54,9 +64,6 @@ public:
         requires std::same_as<std::decay_t<T>, char *> ||
                  std::same_as<std::decay_t<T>, const char *>
     void pushStack(const T var);
-
-    template <typename T>
-    std::expected<T, std::string> getGlobal(const std::string &var);
 
     template <typename ReturnT, typename... Args>
     std::expected<ReturnT, std::string> call(const std::string &function, Args... args);
