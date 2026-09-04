@@ -102,7 +102,7 @@ void LuaIntf::pushStack(const T var) {
     lua_pushstring(L, var);
 }
 
-// right now just single return of number type
+// right now just single return
 template <typename ReturnT, typename... Args>
 std::expected<ReturnT, std::string> LuaIntf::call(const std::string &function, Args... args) {
 
@@ -120,17 +120,12 @@ std::expected<ReturnT, std::string> LuaIntf::call(const std::string &function, A
 
     ((pushStack(args)), ...);
 
-    if (LUA_OK != lua_pcall(L, nargs, 1, 0)) {
+    if (LUA_OK != lua_pcall(L, nargs, nrets, 0)) {
         ret = std::unexpected(lua_tostring(L, -1));
-        luaPop(1);
-        return ret;
-    } else if (lua_isnumber(L, -1)) { // figure out validation on this one...
-        // also figure out multi-return for tuples
-        ret = static_cast<ReturnT>(lua_tonumber(L, -1));
         luaPop(1);
         return ret;
     } else {
-        ret = std::unexpected(lua_tostring(L, -1));
+        ret = luaGetStack<ReturnT>(-1);
         luaPop(nrets);
         return ret;
     }

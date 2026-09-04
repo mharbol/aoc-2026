@@ -44,7 +44,7 @@ TEST_F(LuaIntfTest, TestCallBiggerFunction) {
 }
 
 TEST_F(LuaIntfTest, TestCallDivFunction) {
-    LUA_DO_STRING("function retVal(a, b) return a / b end");
+    LUA_DO_STRING("function retVal(a, b) return a // b end");
     auto ret = intf.call<uint32_t>("retVal", 12, 6);
     ASSERT_TRUE(ret.has_value()) << "Expect ret should be a value: " << ret.error();
     ASSERT_EQ(2, ret.value());
@@ -69,6 +69,13 @@ TEST_F(LuaIntfTest, TestCallMixedFunction) {
     auto ret = intf.call<uint32_t>("retVal", "0123456789", 10);
     ASSERT_TRUE(ret.has_value()) << "Expect ret should be a value: " << ret.error();
     ASSERT_EQ(20, ret.value());
+}
+
+TEST_F(LuaIntfTest, TestCallStringRetFunction) {
+    LUA_DO_STRING("function retVal(s1, s2) return s1 .. ' ' .. s2 end");
+    auto ret = intf.call<std::string>("retVal", "hello", "world");
+    ASSERT_TRUE(ret.has_value()) << "Expect ret should be a value: " << ret.error();
+    ASSERT_EQ("hello world", ret.value());
 }
 
 TEST_F(LuaIntfTest, TestLuaGetStack) {
