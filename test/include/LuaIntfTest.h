@@ -9,7 +9,7 @@
 
 class LuaIntfTest : public ::testing::Test {
 protected:
-    aoc::lua::LuaIntf intf{};
+    lua::LuaIntf intf{};
 
     void LUA_DO_STRING(const std::string &cmd) {
         ASSERT_TRUE(intf.luaDoString(cmd)) << "Failed to run: " << cmd;

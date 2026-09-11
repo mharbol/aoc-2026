@@ -4,22 +4,21 @@
 
 #include <cstddef>
 #include <expected>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <type_traits>
 #include <utility>
 
-extern "C" {
-#include "lauxlib.h"
-#include "lua.h"
-}
+#include <lua.hpp>
 
-namespace aoc::lua {
+namespace lua {
 
 class LuaIntf {
     lua_State *L;
 
 public:
+    // start rule of 5
     LuaIntf() : L(luaL_newstate()) {};
     ~LuaIntf() {
         lua_close(L);
@@ -31,6 +30,7 @@ public:
         return *this;
     };
     LuaIntf(LuaIntf &&other) noexcept : L(std::exchange(other.L, nullptr)) {};
+    // end rule of 5
 
     // TODO redo this one
     template <typename T>
@@ -73,7 +73,7 @@ public:
     std::expected<ReturnT, std::string> call(const std::string &function, Args... args);
 
     template <typename ReturnT>
-    std::expected<ReturnT, std::string> luaGetStack(const int StackIdx);
+    std::expected<ReturnT, std::string> luaGetStack(const int stack_idx);
 
     // TODO remove this eventually
     inline lua_State *getL() {
@@ -83,12 +83,23 @@ public:
     template <typename... ReturnT>
     std::expected<std::tuple<ReturnT...>, std::string> popMultiStack();
 
+    template <typename T>
+    bool luaCheckType(const int stackIdx);
+
 private:
     template <typename... ReturnT, size_t... Is>
-    std::expected<std::tuple<ReturnT...>, std::string> popMultiStackHelper(
+    std::expected<std::tuple<ReturnT...>, std::string> popMultiStack(
         const std::index_sequence<Is...>);
+
+    template <typename ReturnT, auto LuaGetFunc>
+    std::expected<ReturnT, std::string> luaGetStackTemplate(const int stack_idx,
+        const std::string &type_name);
+
+    template <typename ReturnT>
+    std::expected<std::optional<ReturnT>, std::string> luaGetStackOptional(
+        const int stack_idx);
 };
-} // namespace aoc::lua
+} // namespace lua
 
 #include "LuaIntf.ipp"
 

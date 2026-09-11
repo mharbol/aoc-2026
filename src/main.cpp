@@ -3,14 +3,11 @@
 #include <iostream>
 #include <string>
 
-extern "C" {
-#include "lauxlib.h"
-#include "lua.h"
-}
+#include <lua.hpp>
 
 int main() {
 
-    aoc::lua::LuaIntf intf{};
+    lua::LuaIntf intf{};
 
     const std::string cmd = "local b = 7\na = b + 11";
 

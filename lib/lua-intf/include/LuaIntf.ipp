@@ -1,19 +1,29 @@
 
 #include "LuaIntf.h"
+
+#include <cstddef>
 #include <expected>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <type_traits>
 #include <utility>
 
-extern "C" {
-#include "lualib.h"
-}
+#include <lua.hpp>
 
-namespace aoc::lua {
+namespace lua {
 
 template <typename...>
-static constexpr bool dependent_false_v = false;
+constexpr bool dependent_false_v = false; // TODO, maybe this becomes better
+
+template <typename T>
+struct is_optional : std::false_type {};
+
+template <typename U>
+struct is_optional<std::optional<U>> : std::true_type {};
+
+template <typename T>
+inline constexpr bool is_optional_v = is_optional<T>::value;
 
 inline bool LuaIntf::luaDoString(const std::string &cmd) {
     return LUA_OK == luaL_dostring(L, cmd.c_str());
@@ -77,7 +87,7 @@ std::expected<T, std::string> LuaIntf::getGlobal(const std::string &var) {
 
 template <typename T>
     requires std::is_null_pointer_v<T> || std::is_integral_v<T> || std::is_floating_point_v<T>
-void LuaIntf::pushStack(const T var) {
+inline void LuaIntf::pushStack(const T var) {
     if constexpr (std::is_null_pointer_v<T>) {
         lua_pushnil(L);
     } else if constexpr (std::is_same_v<T, bool>) {
@@ -93,23 +103,23 @@ void LuaIntf::pushStack(const T var) {
 
 template <typename T>
     requires std::same_as<std::decay_t<T>, std::string>
-void LuaIntf::pushStack(const T &var) {
+inline void LuaIntf::pushStack(const T &var) {
     lua_pushlstring(L, var.c_str(), var.size());
 }
 
 template <typename T>
     requires std::same_as<std::decay_t<T>, char *> ||
              std::same_as<std::decay_t<T>, const char *>
-void LuaIntf::pushStack(const T var) {
+inline void LuaIntf::pushStack(const T var) {
     lua_pushstring(L, var);
 }
 
-// right now just single return
+// right now just single return and void
 template <typename ReturnT, typename... Args>
 std::expected<ReturnT, std::string> LuaIntf::call(const std::string &function, Args... args) {
 
     constexpr size_t nargs = sizeof...(Args);
-    constexpr size_t nrets = 1; // TODO
+    constexpr size_t nrets = std::is_void_v<ReturnT> ? 0 : 1;
 
     std::expected<ReturnT, std::string> ret;
 
@@ -131,39 +141,68 @@ std::expected<ReturnT, std::string> LuaIntf::call(const std::string &function, A
     }
 }
 
-// TODO maybe do the returns and checks a little better...
+template <typename T>
+bool LuaIntf::luaCheckType(const int stack_idx) {
+    if constexpr (std::is_null_pointer_v<T>) {
+        return lua_isnil(L, stack_idx);
+    } else if constexpr (std::is_same_v<T, bool>) {
+        return lua_isboolean(L, stack_idx);
+    } else if constexpr (std::is_integral_v<T>) {
+        return lua_isinteger(L, stack_idx);
+    } else if constexpr (std::is_floating_point_v<T>) {
+        return lua_isnumber(L, stack_idx);
+    } else if constexpr (std::is_same_v<T, std::string>) {
+        return lua_isstring(L, stack_idx); // TODO: make this is strictly string if you can
+    } else {
+        static_assert(dependent_false_v<T>, "Unsupported return type");
+    }
+}
+
+// TODO maybe error names could be deduced...
+// ...maybe this whole thing becomes private or protected...
 template <typename ReturnT>
-std::expected<ReturnT, std::string> LuaIntf::luaGetStack(const int stackIdx) {
-    if constexpr (std::is_same_v<ReturnT, bool>) {
-        if (lua_isboolean(L, stackIdx)) {
-            return lua_toboolean(L, stackIdx);
-        } else {
-            return std::unexpected("Expected bool but got: " +
-                                   std::string(lua_typename(L, lua_type(L, stackIdx))));
-        }
+std::expected<ReturnT, std::string> LuaIntf::luaGetStack(const int stack_idx) {
+    if constexpr (is_optional_v<ReturnT>) {
+        return luaGetStackOptional<typename ReturnT::value_type>(stack_idx);
+    } else if constexpr (std::is_same_v<ReturnT, bool>) {
+        return luaGetStackTemplate<ReturnT, lua_toboolean>(stack_idx, "bool");
     } else if constexpr (std::is_integral_v<ReturnT>) {
-        if (lua_isinteger(L, stackIdx)) {
-            return static_cast<ReturnT>(lua_tointeger(L, stackIdx));
-        } else {
-            return std::unexpected("Expected int type but got: " +
-                                   std::string(lua_typename(L, lua_type(L, stackIdx))));
-        }
+        return luaGetStackTemplate<ReturnT, [](lua_State *L, int n) {
+            return lua_tointeger(L, n);
+        }>(stack_idx, "integer");
     } else if constexpr (std::is_floating_point_v<ReturnT>) {
-        if (lua_isnumber(L, stackIdx)) {
-            return static_cast<ReturnT>(lua_tonumber(L, stackIdx));
-        } else {
-            return std::unexpected("Expected float type but got: " +
-                                   std::string(lua_typename(L, lua_type(L, stackIdx))));
-        }
+        return luaGetStackTemplate<ReturnT, [](lua_State *L, int n) {
+            return lua_tonumber(L, n);
+        }>(stack_idx, "floating point");
     } else if constexpr (std::is_same_v<ReturnT, std::string>) {
-        if (lua_isstring(L, stackIdx)) {
-            return lua_tostring(L, stackIdx);
-        } else {
-            return std::unexpected("Expected string type but got: " +
-                                   std::string(lua_typename(L, lua_type(L, stackIdx))));
-        }
+        return luaGetStackTemplate<ReturnT, [](lua_State *L, int n) {
+            return lua_tostring(L, n);
+        }>(stack_idx, "string");
     } else {
         static_assert(dependent_false_v<ReturnT>, "Unsupported return type");
+    }
+}
+
+template <typename ReturnT>
+inline std::expected<std::optional<ReturnT>, std::string> LuaIntf::luaGetStackOptional(
+    const int stack_idx) {
+
+    if (luaCheckType<std::nullptr_t>(stack_idx)) {
+        return {};
+    } else {
+        return luaGetStack<ReturnT>(stack_idx);
+    }
+}
+
+template <typename ReturnT, auto LuaGetFunc>
+inline std::expected<ReturnT, std::string> LuaIntf::luaGetStackTemplate(const int stack_idx,
+    const std::string &type_name) {
+
+    if (luaCheckType<ReturnT>(stack_idx)) {
+        return static_cast<ReturnT>(LuaGetFunc(L, stack_idx));
+    } else {
+        return std::unexpected("Expected " + type_name + " type but got: " +
+                               std::string(lua_typename(L, lua_type(L, stack_idx))));
     }
 }
 
@@ -174,8 +213,13 @@ std::expected<ReturnT, std::string> LuaIntf::popStack() {
     return ret;
 }
 
+template <>
+std::expected<void, std::string> LuaIntf::popStack() {
+    return std::expected<void, std::string>{};
+}
+
 template <typename... ReturnT, size_t... Is>
-inline std::expected<std::tuple<ReturnT...>, std::string> LuaIntf::popMultiStackHelper(
+inline std::expected<std::tuple<ReturnT...>, std::string> LuaIntf::popMultiStack(
     const std::index_sequence<Is...>) {
 
     constexpr size_t nargs = sizeof...(ReturnT);
@@ -184,14 +228,14 @@ inline std::expected<std::tuple<ReturnT...>, std::string> LuaIntf::popMultiStack
 
     try {
         (([&returned, this]() {
-            constexpr int stackIdx = -1 - static_cast<int>(Is);
+            constexpr int idx = -1 - static_cast<int>(Is);
 
-            auto ret = luaGetStack<std::tuple_element_t<Is, std::tuple<ReturnT...>>>(stackIdx);
+            auto ret = luaGetStack<std::tuple_element_t<Is, std::tuple<ReturnT...>>>(idx);
             if (ret.has_value()) {
                 std::get<Is>(returned) = std::move(ret.value());
             } else {
                 throw std::string(
-                    "Unexpected value type for stack index: " + std::to_string(stackIdx));
+                    "Unexpected value type for stack index: " + std::to_string(idx));
             }
         }()),
             ...);
@@ -205,7 +249,7 @@ inline std::expected<std::tuple<ReturnT...>, std::string> LuaIntf::popMultiStack
 }
 
 template <typename... ReturnT>
-std::expected<std::tuple<ReturnT...>, std::string> LuaIntf::popMultiStack() {
-    return popMultiStackHelper<ReturnT...>(std::make_index_sequence<sizeof...(ReturnT)>{});
+inline std::expected<std::tuple<ReturnT...>, std::string> LuaIntf::popMultiStack() {
+    return popMultiStack<ReturnT...>(std::make_index_sequence<sizeof...(ReturnT)>{});
 }
-} // namespace aoc::lua
+} // namespace lua
