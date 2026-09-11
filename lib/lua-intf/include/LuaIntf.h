@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <expected>
 #include <string>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 
@@ -65,16 +66,27 @@ public:
                  std::same_as<std::decay_t<T>, const char *>
     void pushStack(const T var);
 
+    template <typename ReturnT>
+    std::expected<ReturnT, std::string> popStack();
+
     template <typename ReturnT, typename... Args>
     std::expected<ReturnT, std::string> call(const std::string &function, Args... args);
 
     template <typename ReturnT>
-    std::expected<ReturnT, std::string> luaGetStack(const int stackIdx);
+    std::expected<ReturnT, std::string> luaGetStack(const int StackIdx);
 
     // TODO remove this eventually
     inline lua_State *getL() {
         return L;
     }
+
+    template <typename... ReturnT>
+    std::expected<std::tuple<ReturnT...>, std::string> popMultiStack();
+
+private:
+    template <typename... ReturnT, size_t... Is>
+    std::expected<std::tuple<ReturnT...>, std::string> popMultiStackHelper(
+        const std::index_sequence<Is...>);
 };
 } // namespace aoc::lua
 

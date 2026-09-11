@@ -2,7 +2,9 @@
 #include "LuaIntf.h"
 #include <expected>
 #include <string>
+#include <tuple>
 #include <type_traits>
+#include <utility>
 
 extern "C" {
 #include "lualib.h"
@@ -125,9 +127,7 @@ std::expected<ReturnT, std::string> LuaIntf::call(const std::string &function, A
         luaPop(1);
         return ret;
     } else {
-        ret = luaGetStack<ReturnT>(-1);
-        luaPop(nrets);
-        return ret;
+        return popStack<ReturnT>();
     }
 }
 
@@ -165,5 +165,47 @@ std::expected<ReturnT, std::string> LuaIntf::luaGetStack(const int stackIdx) {
     } else {
         static_assert(dependent_false_v<ReturnT>, "Unsupported return type");
     }
+}
+
+template <typename ReturnT>
+std::expected<ReturnT, std::string> LuaIntf::popStack() {
+    auto ret = luaGetStack<ReturnT>(-1);
+    luaPop(1);
+    return ret;
+}
+
+template <typename... ReturnT, size_t... Is>
+inline std::expected<std::tuple<ReturnT...>, std::string> LuaIntf::popMultiStackHelper(
+    const std::index_sequence<Is...>) {
+
+    constexpr size_t nargs = sizeof...(ReturnT);
+
+    std::tuple<ReturnT...> returned{};
+
+    try {
+        (([&returned, this]() {
+            constexpr int stackIdx = -1 - static_cast<int>(Is);
+
+            auto ret = luaGetStack<std::tuple_element_t<Is, std::tuple<ReturnT...>>>(stackIdx);
+            if (ret.has_value()) {
+                std::get<Is>(returned) = std::move(ret.value());
+            } else {
+                throw std::string(
+                    "Unexpected value type for stack index: " + std::to_string(stackIdx));
+            }
+        }()),
+            ...);
+    } catch (const std::string &err) {
+        luaPop(nargs);
+        return std::unexpected(std::move(err));
+    }
+
+    luaPop(nargs);
+    return returned;
+}
+
+template <typename... ReturnT>
+std::expected<std::tuple<ReturnT...>, std::string> LuaIntf::popMultiStack() {
+    return popMultiStackHelper<ReturnT...>(std::make_index_sequence<sizeof...(ReturnT)>{});
 }
 } // namespace aoc::lua

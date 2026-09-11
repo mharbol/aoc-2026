@@ -1,5 +1,7 @@
 
+#include <cstdint>
 #include <gtest/gtest.h>
+#include <tuple>
 
 #include "LuaIntf.h"
 #include "LuaIntfTest.h"
@@ -99,4 +101,21 @@ TEST_F(LuaIntfTest, TestLuaGetStack) {
     auto ret4 = intf.luaGetStack<std::string>(-4);
     ASSERT_TRUE(ret4.has_value()) << "Expect ret4 should be a value: " << ret4.error();
     ASSERT_EQ("hello", ret4.value());
+}
+
+TEST_F(LuaIntfTest, TestLuaPopStack) {
+    intf.pushStack(10); // -1
+    auto ret1 = intf.popStack<uint32_t>();
+    ASSERT_TRUE(ret1.has_value()) << "Expect ret1 should be a value: " << ret1.error();
+    ASSERT_EQ(10, ret1.value());
+}
+
+TEST_F(LuaIntfTest, TestLuaPopMultiStack) {
+    intf.pushStack(1.2);  // -3
+    intf.pushStack(true); // -2
+    intf.pushStack(10);   // -1
+    auto ret1 = intf.popMultiStack<uint32_t, bool, float>();
+    ASSERT_TRUE(ret1.has_value()) << "Expect ret1 should be a value: " << ret1.error();
+    constexpr std::tuple<uint32_t, bool, float> theReturn{10, true, 1.2};
+    ASSERT_EQ(theReturn, ret1.value());
 }
