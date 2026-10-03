@@ -1,5 +1,6 @@
 
 #include "LuaIntf.h"
+#include <iomanip>
 #include <iostream>
 #include <string>
 
@@ -17,7 +18,7 @@ int main() {
         lua_getglobal(intf.getL(), "a");
         if (lua_isnumber(intf.getL(), -1)) {
 
-            std::cout << "Command: \"" << cmd << "\"" << std::endl;
+            std::cout << "Command: " << std::quoted(cmd) << std::endl;
 
             const auto a_cpp_f = static_cast<float>(lua_tonumber(intf.getL(), -1));
             std::cout << "a_cpp_f = " << a_cpp_f << std::endl;
@@ -50,8 +51,7 @@ int main() {
         return 1;
     }
 
-    lua_getglobal(intf.getL(), "a");
-    std::cout << "from file: " << intf.getHeadAsString() << std::endl;
+    std::cout << "from file: " << *intf.getGlobal<std::string>("a") << std::endl;
 
     // calling some lua functions...
     const std::string add_stuff = "AddStuff";

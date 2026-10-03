@@ -1,6 +1,6 @@
 
-#ifndef __LUA_TEST_H__
-#define __LUA_TEST_H__
+#ifndef _LUA_TEST_H_
+#define _LUA_TEST_H_
 
 #include "LuaIntf.h"
 #include <gtest/gtest.h>

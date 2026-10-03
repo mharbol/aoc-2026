@@ -29,12 +29,6 @@ inline bool LuaIntf::luaDoString(const std::string &cmd) {
     return LUA_OK == luaL_dostring(L, cmd.c_str());
 }
 
-inline std::string LuaIntf::getHeadAsString() {
-    size_t len;
-    const char *str = lua_tolstring(L, -1, &len);
-    return std::string(str, len);
-}
-
 inline void LuaIntf::luaPop(size_t pop) {
     lua_pop(L, pop);
 }

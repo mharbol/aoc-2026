@@ -1,6 +1,6 @@
 
-#ifndef __AOC_LUA_TEMPLATE_STRING_H__
-#define __AOC_LUA_TEMPLATE_STRING_H__
+#ifndef _AOC_LUA_TEMPLATE_STRING_H_
+#define _AOC_LUA_TEMPLATE_STRING_H_
 
 #include <algorithm>
 #include <cstddef>
@@ -16,4 +16,4 @@ struct TemplateString {
 };
 
 } // namespace aoc::lua
-#endif // __AOC_LUA_TEMPLATE_STRING_H__
+#endif // _AOC_LUA_TEMPLATE_STRING_H_

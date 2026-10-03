@@ -1,6 +1,6 @@
 
-#ifndef __AOC_LUA_INTF_H__
-#define __AOC_LUA_INTF_H__
+#ifndef _AOC_LUA_INTF_H_
+#define _AOC_LUA_INTF_H_
 
 #include <cstddef>
 #include <expected>
@@ -35,9 +35,6 @@ public:
     // TODO redo this one
     template <typename T>
     std::expected<T, std::string> getGlobal(const std::string &var);
-
-    // TODO redo this one
-    std::string getHeadAsString();
 
     // TODO update for failed exec
     bool luaDoString(const std::string &cmd);
@@ -103,4 +100,4 @@ private:
 
 #include "LuaIntf.ipp"
 
-#endif // __AOC_LUA_INTF_H__
+#endif // _AOC_LUA_INTF_H_
