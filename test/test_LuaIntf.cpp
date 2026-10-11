@@ -200,3 +200,29 @@ TEST_F(LuaIntfTest, TestLuaCheckType) {
     // ASSERT_FALSE(intf.luaCheckType<std::string>(-1)); // TODO: should be false
     intf.luaPop(1);
 }
+
+// TODO, this is eventually private
+TEST_F(LuaIntfTest, TestLuaGetUncheckedStack) {
+    intf.pushStack(12);
+    const auto ret = intf.luaGetStackUnchecked<int>(-1);
+    ASSERT_EQ(12, ret);
+    const auto ret2 = intf.luaGetStackUnchecked<float>(-1);
+    ASSERT_EQ(12.0, ret2);
+    const auto ret3 = intf.luaGetStackUnchecked<bool>(-1);
+    ASSERT_EQ(true, ret3); // even though this is an int... "unchecked" yah know...
+}
+
+// TODO... we'll get here
+TEST_F(LuaIntfTest, TestLuaVariantStack) {
+    intf.pushStack(12);
+    const auto ret = intf.luaGetStackVariant<int>(-1);
+    ASSERT_TRUE(ret.has_value()) << "Expect ret should be a value: " << ret.error();
+    ASSERT_EQ(12, std::get<0>(*ret));
+
+    const auto ret2 = intf.luaGetStackVariant<bool>(-1);
+    ASSERT_FALSE(ret2.has_value()) << "Expect ret2 should not be a value: " << ret2.error();
+
+    const auto ret3 = intf.luaGetStackVariant<bool, std::string>(-1);
+    ASSERT_TRUE(ret3.has_value()) << "Expect ret3 should be a value: " << ret3.error();
+    ASSERT_EQ("12", std::get<1>(*ret3));
+}

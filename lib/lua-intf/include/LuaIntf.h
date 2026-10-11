@@ -9,6 +9,7 @@
 #include <tuple>
 #include <type_traits>
 #include <utility>
+#include <variant>
 
 #include <lua.hpp>
 
@@ -81,15 +82,28 @@ public:
     std::expected<std::tuple<ReturnT...>, std::string> popMultiStack();
 
     template <typename T>
-    bool luaCheckType(const int stackIdx);
+    bool luaCheckType(const int stack_idx);
+
+    template <typename... ReturnT, size_t... Is>
+    std::expected<std::variant<ReturnT...>, std::string> luaGetStackVariant(
+        const int stack_idx);
+
+    template <typename... ReturnT, size_t... Is>
+    std::expected<std::variant<ReturnT...>, std::string> luaGetStackVariantHelper(
+        const int stack_idx, const std::index_sequence<Is...>);
+
+    // TODO: This will eventually become private.
+    // TODO: This is the terminal point for all "get stack" operations, along with check stack
+    template <typename ReturnT>
+    ReturnT luaGetStackUnchecked(const int stack_idx);
 
 private:
     template <typename... ReturnT, size_t... Is>
     std::expected<std::tuple<ReturnT...>, std::string> popMultiStack(
         const std::index_sequence<Is...>);
 
-    template <typename ReturnT, auto LuaGetFunc>
-    std::expected<ReturnT, std::string> luaGetStackTemplate(const int stack_idx,
+    template <typename ReturnT>
+    std::expected<ReturnT, std::string> luaGetStackExpected(const int stack_idx,
         const std::string &type_name);
 
     template <typename ReturnT>
