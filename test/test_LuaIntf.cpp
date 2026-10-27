@@ -1,8 +1,10 @@
 
+#include <array>
 #include <cstdint>
 #include <gtest/gtest.h>
 #include <optional>
 #include <tuple>
+#include <vector>
 
 #include "LuaIntf.h"
 #include "LuaIntfTest.h"
@@ -15,6 +17,39 @@ TEST_F(LuaIntfTest, TestPushPopStack) {
     std::string s = "hello";
     intf.pushStack(s);
     intf.pushStack(nullptr);
+}
+
+TEST_F(LuaIntfTest, TestPushPopStackVec) {
+
+    const size_t init_sz = intf.getStackSize();
+
+    const std::vector<int32_t> vec_primes{2, 3, 5, 7, 11};
+    intf.pushStack(vec_primes);
+
+    const int32_t arr_squares[]{1, 4, 9, 16, 25};
+    intf.pushStack(arr_squares);
+
+    const std::array<std::string, 4> arr_str{"a", "b", "c", "d"};
+    intf.pushStack(arr_str);
+
+    intf.luaPop(3);
+
+    ASSERT_EQ(init_sz, intf.getStackSize());
+}
+
+TEST_F(LuaIntfTest, TestCallVecFunc) {
+    LUA_DO_STRING("function sum(arr)"
+                  "    local sum = 0"
+                  "    for _, val in ipairs(arr) do"
+                  "        sum = sum + val"
+                  "    end"
+                  "    return sum "
+                  "end");
+    intf.openBaseLibs();
+    const std::vector<uint32_t> nums{1, 2, 3, 4, 5};
+    const auto ret = intf.call<uint32_t>("sum", nums);
+    ASSERT_TRUE(ret.has_value()) << "Expect ret should have a value: " << ret.error();
+    ASSERT_EQ(15, *ret);
 }
 
 TEST_F(LuaIntfTest, TestBasicDoString) {
@@ -212,7 +247,6 @@ TEST_F(LuaIntfTest, TestLuaGetUncheckedStack) {
     ASSERT_EQ(true, ret3); // even though this is an int... "unchecked" yah know...
 }
 
-// TODO... we'll get here
 TEST_F(LuaIntfTest, TestLuaVariantStack) {
     intf.pushStack(12);
     const auto ret = intf.luaGetStackVariant<int>(-1);

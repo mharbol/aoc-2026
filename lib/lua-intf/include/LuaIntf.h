@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <expected>
 #include <optional>
+#include <ranges>
 #include <string>
 #include <tuple>
 #include <type_traits>
@@ -13,7 +14,37 @@
 
 #include <lua.hpp>
 
+/**
+ * @brief The Lua Interface
+ */
 namespace lua {
+
+/**
+ * @brief traits and concepts for `lua` namespace
+ */
+namespace impl {
+template <typename...>
+constexpr bool dependent_false_v = false; // TODO, maybe this becomes better
+
+template <typename T>
+struct is_optional : std::false_type {};
+
+template <typename U>
+struct is_optional<std::optional<U>> : std::true_type {};
+
+template <typename T>
+inline constexpr bool is_optional_v = is_optional<T>::value;
+
+template <typename T, typename Variant>
+struct variant_contains : std::false_type {};
+
+template <typename T, typename... V>
+struct variant_contains<T, std::variant<V...>>
+    : std::bool_constant<(std::is_same_v<T, V> || ...)> {};
+
+template <typename T, typename V>
+inline constexpr bool variant_contains_v = variant_contains<T, V>::value;
+} // namespace impl
 
 class LuaIntf {
     lua_State *L;
@@ -63,6 +94,12 @@ public:
         requires std::same_as<std::decay_t<T>, char *> ||
                  std::same_as<std::decay_t<T>, const char *>
     void pushStack(const T var);
+
+    template <std::ranges::input_range R>
+        requires(!std::same_as<std::decay_t<R>, std::string>) &&
+                (!std::same_as<std::decay_t<R>, char *>) &&
+                (!std::same_as<std::decay_t<R>, const char *>)
+    void pushStack(const R &var);
 
     template <typename ReturnT>
     std::expected<ReturnT, std::string> popStack();

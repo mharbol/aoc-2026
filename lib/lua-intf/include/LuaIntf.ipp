@@ -1,9 +1,11 @@
 
 #include "LuaIntf.h"
+#include "lua.h"
 
 #include <cstddef>
 #include <expected>
 #include <optional>
+#include <ranges>
 #include <string>
 #include <tuple>
 #include <type_traits>
@@ -13,28 +15,6 @@
 #include <lua.hpp>
 
 namespace lua {
-
-template <typename...>
-constexpr bool dependent_false_v = false; // TODO, maybe this becomes better
-
-template <typename T>
-struct is_optional : std::false_type {};
-
-template <typename U>
-struct is_optional<std::optional<U>> : std::true_type {};
-
-template <typename T>
-inline constexpr bool is_optional_v = is_optional<T>::value;
-
-template <typename T, typename Variant>
-struct variant_contains : std::false_type {};
-
-template <typename T, typename... V>
-struct variant_contains<T, std::variant<V...>>
-    : std::bool_constant<(std::is_same_v<T, V> || ...)> {};
-
-template <typename T, typename V>
-inline constexpr bool variant_contains_v = variant_contains<T, V>::value;
 
 inline bool LuaIntf::luaDoString(const std::string &cmd) {
     return LUA_OK == luaL_dostring(L, cmd.c_str());
@@ -103,7 +83,7 @@ inline void LuaIntf::pushStack(const T var) {
     } else if constexpr (std::is_floating_point_v<T>) {
         lua_pushnumber(L, var);
     } else {
-        static_assert(dependent_false_v<T>, "Unsupported type");
+        static_assert(impl::dependent_false_v<T>, "Unsupported type");
     }
 }
 
@@ -118,6 +98,20 @@ template <typename T>
              std::same_as<std::decay_t<T>, const char *>
 inline void LuaIntf::pushStack(const T var) {
     lua_pushstring(L, var);
+}
+
+template <std::ranges::input_range R>
+    requires(!std::same_as<std::decay_t<R>, std::string>) &&
+            (!std::same_as<std::decay_t<R>, char *>) &&
+            (!std::same_as<std::decay_t<R>, const char *>)
+void LuaIntf::pushStack(const R &var) {
+    const auto sz = std::ranges::size(var);
+    lua_createtable(L, sz, 0);
+    int idx = 0;
+    for (const auto &item : var) {
+        pushStack(item);
+        lua_rawseti(L, -2, ++idx);
+    }
 }
 
 // right now just single return and void
@@ -160,7 +154,7 @@ inline bool LuaIntf::luaCheckType(const int stack_idx) {
     } else if constexpr (std::is_same_v<T, std::string>) {
         return lua_isstring(L, stack_idx); // TODO: make this is strictly string if you can
     } else {
-        static_assert(dependent_false_v<T>, "Unsupported return type");
+        static_assert(impl::dependent_false_v<T>, "Unsupported return type");
     }
 }
 
@@ -168,7 +162,7 @@ inline bool LuaIntf::luaCheckType(const int stack_idx) {
 // ...maybe this whole thing becomes private or protected...
 template <typename ReturnT>
 std::expected<ReturnT, std::string> LuaIntf::luaGetStack(const int stack_idx) {
-    if constexpr (is_optional_v<ReturnT>) {
+    if constexpr (impl::is_optional_v<ReturnT>) {
         return luaGetStackOptional<typename ReturnT::value_type>(stack_idx);
     } else if constexpr (std::is_same_v<ReturnT, bool>) {
         return luaGetStackExpected<ReturnT>(stack_idx, "bool");
@@ -179,7 +173,7 @@ std::expected<ReturnT, std::string> LuaIntf::luaGetStack(const int stack_idx) {
     } else if constexpr (std::is_same_v<ReturnT, std::string>) {
         return luaGetStackExpected<ReturnT>(stack_idx, "string");
     } else {
-        static_assert(dependent_false_v<ReturnT>, "Unsupported return type");
+        static_assert(impl::dependent_false_v<ReturnT>, "Unsupported return type");
     }
 }
 
@@ -194,7 +188,7 @@ inline ReturnT LuaIntf::luaGetStackUnchecked(const int stack_idx) {
     } else if constexpr (std::is_same_v<ReturnT, std::string>) {
         return lua_tostring(L, stack_idx);
     } else {
-        static_assert(dependent_false_v<ReturnT>, "Unsupported return type");
+        static_assert(impl::dependent_false_v<ReturnT>, "Unsupported return type");
     }
 }
 
@@ -240,40 +234,32 @@ inline std::expected<std::tuple<ReturnT...>, std::string> LuaIntf::popMultiStack
 
     constexpr size_t nargs = sizeof...(ReturnT);
 
-    std::tuple<ReturnT...> returned{};
+    using T = std::tuple<ReturnT...>;
+    T ret{};
 
-    try {
-        (([&returned, this]() {
-            constexpr int idx = -1 - static_cast<int>(Is);
-
-            auto ret = luaGetStack<std::tuple_element_t<Is, std::tuple<ReturnT...>>>(idx);
-            if (ret.has_value()) {
-                std::get<Is>(returned) = std::move(ret.value());
-            } else {
-                throw std::string(
-                    "Unexpected value type for stack index: " + std::to_string(idx));
-            }
-        }()),
+    // check all before filling tuple
+    if ((luaCheckType<std::tuple_element_t<Is, T>>(-1 - static_cast<int>(Is)) && ...)) {
+        ((std::get<Is>(ret) =
+                 luaGetStackUnchecked<std::tuple_element_t<Is, T>>(-1 - static_cast<int>(Is))),
             ...);
-    } catch (const std::string &err) {
         luaPop(nargs);
-        return std::unexpected(std::move(err));
+        return ret;
+    } else {
+        luaPop(nargs);
+        return std::unexpected("Unexpected return type");
     }
-
-    luaPop(nargs);
-    return returned;
 }
 
 template <typename... ReturnT, size_t... Is>
 inline std::expected<std::variant<ReturnT...>, std::string> LuaIntf::luaGetStackVariantHelper(
-    const int i, const std::index_sequence<Is...>) {
+    const int stack_idx, const std::index_sequence<Is...>) {
 
     using V = std::variant<ReturnT...>;
     V ret{};
 
     // short-circuit on the variant and return first found type match
-    if (((luaCheckType<typename std::variant_alternative_t<Is, V>>(i)
-                 ? (ret = luaGetStackUnchecked<typename std::variant_alternative_t<Is, V>>(i),
+    if (((luaCheckType<std::variant_alternative_t<Is, V>>(stack_idx)
+                 ? (ret = luaGetStackUnchecked<std::variant_alternative_t<Is, V>>(stack_idx),
                        true)
                  : false) ||
             ...)) {
