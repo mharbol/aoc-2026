@@ -17,28 +17,19 @@ int main() {
         std::cerr << err << std::endl;
     }
 
-    if (LUA_OK != luaL_dofile(intf.getL(), "lua/myscript.lua")) {
-        std::cerr << lua_tostring(intf.getL(), -1) << std::endl;
-        // TODO probably pop but also we're ending sooo......
-        return 1;
-    }
+    intf.luaDoFile("lua/myscript.lua");
 
     std::cout << "from file: " << *intf.getGlobal<std::string>("a") << std::endl;
 
     const std::string add_stuff = "AddStuff";
     constexpr float a = 3.5f;
     constexpr float b = 7.1f;
-    lua_getglobal(intf.getL(), add_stuff.c_str());
-
-    lua_pushnumber(intf.getL(), a);
-    lua_pushnumber(intf.getL(), b);
 
     const auto ret = intf.call<float>("AddStuff", a, b).value();
     std::cout << "Called AddStuff with a = " << a << " and b = " << b
               << " and got return: " << ret << "." << std::endl;
 
     const std::string other_func = "MySort";
-    lua_getglobal(intf.getL(), other_func.c_str());
     static_cast<void>(*intf.call<void>("MySort"));
 
     constexpr auto path_func = "PrintPath";

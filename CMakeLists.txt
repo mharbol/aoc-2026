@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(
-    lua-stuff
+    aoc-2026
     VERSION 0.0.1
-    DESCRIPTION "Testing out Lua"
+    DESCRIPTION "Testing out Lua for Advent of Code 2026"
     LANGUAGES CXX
 )
 set(CMAKE_CXX_STANDARD 23)
@@ -19,7 +19,7 @@ add_library(cxx_setup INTERFACE)
 target_compile_options(cxx_setup
     INTERFACE -Wall -Wpedantic -Wextra -Werror)
 target_compile_features(cxx_setup INTERFACE cxx_std_23)
-# target_include_directories(cxx_setup INTERFACE ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(cxx_setup INTERFACE ${PROJECT_SOURCE_DIR}/include)
 
 add_subdirectory(lib)
 add_subdirectory(src)

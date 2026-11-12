@@ -20,6 +20,14 @@ inline bool LuaIntf::luaDoString(const std::string &cmd) {
     return LUA_OK == luaL_dostring(L, cmd.c_str());
 }
 
+inline bool LuaIntf::luaDoFile(const std::string &file) {
+    const auto ok = LUA_OK == luaL_dofile(L, file.c_str());
+    if (!ok) {
+        luaPop(1);
+    }
+    return ok;
+}
+
 inline void LuaIntf::luaPop(size_t pop) {
     lua_pop(L, pop);
 }

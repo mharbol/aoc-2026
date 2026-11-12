@@ -81,6 +81,9 @@ public:
     // TODO update for failed exec
     bool luaDoString(const std::string &cmd);
 
+    // TODO update for failed exec
+    bool luaDoFile(const std::string &file);
+
     // TODO (maybe) improve the path stuff... maybe
     void appendPath(const std::string &path);
 

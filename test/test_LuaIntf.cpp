@@ -303,7 +303,9 @@ TEST_F(LuaIntfStackTest, TestLuaVec) {
     intf.luaPop(2);
 }
 
-TEST_F(LuaIntfStackTest, TestAppendPath) {
+TEST_F(LuaIntfStackTest, TestAppendPathAndDoFile) {
     intf.openBaseLibs();
-    intf.appendPath("asdf");
+    intf.appendPath(";../.././lua/?.lua;../.././lua/?/init.lua");
+    ASSERT_TRUE(intf.luaDoFile("../../lua/myscript.lua"));
+    auto r = intf.call<uint32_t>("AddStuff", 2, 3);
 }
