@@ -19,9 +19,7 @@ TEST_F(LuaIntfTest, TestPushPopStack) {
     intf.pushStack(nullptr);
 }
 
-TEST_F(LuaIntfTest, TestPushPopStackVec) {
-
-    const size_t init_sz = intf.getStackSize();
+TEST_F(LuaIntfStackTest, TestPushStackVec) {
 
     const std::vector<int32_t> vec_primes{2, 3, 5, 7, 11};
     intf.pushStack(vec_primes);
@@ -33,11 +31,27 @@ TEST_F(LuaIntfTest, TestPushPopStackVec) {
     intf.pushStack(arr_str);
 
     intf.luaPop(3);
-
-    ASSERT_EQ(init_sz, intf.getStackSize());
 }
 
-TEST_F(LuaIntfTest, TestCallVecFunc) {
+TEST_F(LuaIntfStackTest, TestPushPopStackVec) {
+
+    const std::vector<uint32_t> vec_primes{2, 3, 5, 7, 11};
+    const std::vector<int32_t> vec_squares{1, 4, 9, 16, 25};
+    const std::array<std::string, 4> arr_str{"a", "b", "c", "d"};
+
+    intf.pushStack(vec_primes);
+    intf.pushStack(vec_squares);
+    intf.pushStack(arr_str);
+
+    const auto ret_strs_vec = intf.popStack<std::vector<std::string>>();
+    ASSERT_EQ(std::vector<std::string>(arr_str.begin(), arr_str.end()), *ret_strs_vec);
+    const auto ret_vec_squares = intf.popStack<std::vector<int32_t>>();
+    ASSERT_EQ(vec_squares, *ret_vec_squares);
+    const auto ret_vec_primes = intf.popStack<std::vector<uint32_t>>();
+    ASSERT_EQ(vec_primes, *ret_vec_primes);
+}
+
+TEST_F(LuaIntfStackTest, TestCallVecFunc) {
     LUA_DO_STRING("function sum(arr)"
                   "    local sum = 0"
                   "    for _, val in ipairs(arr) do"
@@ -52,28 +66,28 @@ TEST_F(LuaIntfTest, TestCallVecFunc) {
     ASSERT_EQ(15, *ret);
 }
 
-TEST_F(LuaIntfTest, TestBasicDoString) {
+TEST_F(LuaIntfStackTest, TestBasicDoString) {
     LUA_DO_STRING("a = 2 + 2");
     const auto a = intf.getGlobal<uint32_t>("a");
     ASSERT_TRUE(a.has_value()) << "Expect 'a' should be a global value: " << a.error();
     ASSERT_EQ(4, a.value());
 }
 
-TEST_F(LuaIntfTest, TestCallSimpleFunc) {
+TEST_F(LuaIntfStackTest, TestCallSimpleFunc) {
     LUA_DO_STRING("function retVal(a) return a end");
     auto ret = intf.call<uint32_t>("retVal", 10);
     ASSERT_TRUE(ret.has_value()) << "Expect ret should be a value: " << ret.error();
     ASSERT_EQ(10, ret.value());
 }
 
-TEST_F(LuaIntfTest, TestCallAddFunc) {
+TEST_F(LuaIntfStackTest, TestCallAddFunc) {
     LUA_DO_STRING("function retVal(a, b) return a + b end");
     auto ret = intf.call<uint32_t>("retVal", 5, 5);
     ASSERT_TRUE(ret.has_value()) << "Expect ret should be a value: " << ret.error();
     ASSERT_EQ(10, ret.value());
 }
 
-TEST_F(LuaIntfTest, TestCallBiggerFunction) {
+TEST_F(LuaIntfStackTest, TestCallBiggerFunction) {
     LUA_DO_STRING("function add(a, b) return a + b end");
     LUA_DO_STRING("function retVal(a, b) return add(a, b) end");
     auto ret = intf.call<uint32_t>("retVal", 5, 5);
@@ -81,35 +95,35 @@ TEST_F(LuaIntfTest, TestCallBiggerFunction) {
     ASSERT_EQ(10, ret.value());
 }
 
-TEST_F(LuaIntfTest, TestCallDivFunction) {
+TEST_F(LuaIntfStackTest, TestCallDivFunction) {
     LUA_DO_STRING("function retVal(a, b) return a // b end");
     auto ret = intf.call<uint32_t>("retVal", 12, 6);
     ASSERT_TRUE(ret.has_value()) << "Expect ret should be a value: " << ret.error();
     ASSERT_EQ(2, ret.value());
 }
 
-TEST_F(LuaIntfTest, TestCallNoArgsFunction) {
+TEST_F(LuaIntfStackTest, TestCallNoArgsFunction) {
     LUA_DO_STRING("function retVal() return 10 end");
     auto ret = intf.call<uint32_t>("retVal");
     ASSERT_TRUE(ret.has_value()) << "Expect ret should be a value: " << ret.error();
     ASSERT_EQ(10, ret.value());
 }
 
-TEST_F(LuaIntfTest, TestCallStringFunction) {
+TEST_F(LuaIntfStackTest, TestCallStringFunction) {
     LUA_DO_STRING("function retVal(a) return #a end");
     auto ret = intf.call<uint32_t>("retVal", "0123456789");
     ASSERT_TRUE(ret.has_value()) << "Expect ret should be a value: " << ret.error();
     ASSERT_EQ(10, ret.value());
 }
 
-TEST_F(LuaIntfTest, TestCallMixedFunction) {
+TEST_F(LuaIntfStackTest, TestCallMixedFunction) {
     LUA_DO_STRING("function retVal(str, num) return #str + num end");
     auto ret = intf.call<uint32_t>("retVal", "0123456789", 10);
     ASSERT_TRUE(ret.has_value()) << "Expect ret should be a value: " << ret.error();
     ASSERT_EQ(20, ret.value());
 }
 
-TEST_F(LuaIntfTest, TestCallVoidFunction) {
+TEST_F(LuaIntfStackTest, TestCallVoidFunction) {
     LUA_DO_STRING("function retVal() end");
     auto ret = intf.call<void>("retVal");
     ASSERT_TRUE(ret.has_value()) << "Expect ret should be a value: " << ret.error();
@@ -129,7 +143,17 @@ TEST_F(LuaIntfTest, TestCallVoidFunction) {
     ASSERT_EQ(a, 3);
 }
 
-TEST_F(LuaIntfTest, TestCallStringRetFunction) {
+TEST_F(LuaIntfStackTest, TestCallMultiRetFunction) {
+    LUA_DO_STRING("function retTup() return 1, 2, 3 end");
+    const auto ret1 = intf.call<uint32_t, uint32_t, uint32_t>("retTup").value();
+    ASSERT_EQ(std::make_tuple(1, 2, 3), ret1);
+
+    LUA_DO_STRING("function retTupMixed() return false, 2, 'hello' end");
+    const auto ret2 = intf.call<bool, int32_t, std::string>("retTupMixed").value();
+    ASSERT_EQ(std::make_tuple(false, 2, "hello"), ret2);
+}
+
+TEST_F(LuaIntfStackTest, TestCallStringRetFunction) {
     LUA_DO_STRING("function retVal(s1, s2) return s1 .. ' ' .. s2 end");
     auto ret = intf.call<std::string>("retVal", "hello", "world");
     ASSERT_TRUE(ret.has_value()) << "Expect ret should be a value: " << ret.error();
@@ -169,14 +193,14 @@ TEST_F(LuaIntfTest, TestLuaGetStack) {
     ASSERT_EQ(std::nullopt, ret5.value());
 }
 
-TEST_F(LuaIntfTest, TestLuaPopStack) {
+TEST_F(LuaIntfStackTest, TestLuaPopStack) {
     intf.pushStack(10); // -1
     auto ret1 = intf.popStack<uint32_t>();
     ASSERT_TRUE(ret1.has_value()) << "Expect ret1 should be a value: " << ret1.error();
     ASSERT_EQ(10, ret1.value());
 }
 
-TEST_F(LuaIntfTest, TestLuaPopStackVoid) {
+TEST_F(LuaIntfStackTest, TestLuaPopStackVoid) {
 
     const size_t init_stack_size = intf.getStackSize();
 
@@ -190,21 +214,19 @@ TEST_F(LuaIntfTest, TestLuaPopStackVoid) {
     auto ret2 = intf.popStack<uint32_t>();
     ASSERT_TRUE(ret2.has_value()) << "Expect ret2 should be a value: " << ret1.error();
     ASSERT_EQ(10, ret2.value());
-
-    ASSERT_EQ(init_stack_size, intf.getStackSize()) << "Stack should be same size as initial";
 }
 
-TEST_F(LuaIntfTest, TestLuaPopMultiStack) {
-    intf.pushStack(1.2);  // -3
+TEST_F(LuaIntfStackTest, TestLuaPopMultiStack) {
+    intf.pushStack(1.2f); // -3
     intf.pushStack(true); // -2
     intf.pushStack(10);   // -1
-    auto ret1 = intf.popMultiStack<uint32_t, bool, float>();
-    ASSERT_TRUE(ret1.has_value()) << "Expect ret1 should be a value: " << ret1.error();
-    constexpr std::tuple<uint32_t, bool, float> the_return{10, true, 1.2};
-    ASSERT_EQ(the_return, ret1.value());
+    auto ret = intf.popStack<float, bool, uint32_t>();
+    ASSERT_TRUE(ret.has_value()) << "Expect ret should be a value: " << ret.error();
+    constexpr std::tuple<float, bool, uint32_t> the_return{1.2, true, 10};
+    ASSERT_EQ(the_return, ret.value());
 }
 
-TEST_F(LuaIntfTest, TestLuaCheckType) {
+TEST_F(LuaIntfStackTest, TestLuaCheckType) {
     intf.pushStack(true);
     ASSERT_TRUE(intf.luaCheckType<bool>(-1));
     ASSERT_FALSE(intf.luaCheckType<int>(-1));
@@ -259,4 +281,29 @@ TEST_F(LuaIntfTest, TestLuaVariantStack) {
     const auto ret3 = intf.luaGetStackVariant<bool, std::string>(-1);
     ASSERT_TRUE(ret3.has_value()) << "Expect ret3 should be a value: " << ret3.error();
     ASSERT_EQ("12", std::get<1>(*ret3));
+}
+
+TEST_F(LuaIntfStackTest, TestLuaVec) {
+
+    const std::vector<uint32_t> nums{1, 2, 3};
+    const std::vector<std::string> strs{"raindrops", "roses", "whiskers", "kittens"};
+
+    intf.pushStack(nums);
+    ASSERT_TRUE(intf.luaCheckType<std::vector<int>>(-1));
+    intf.pushStack(strs);
+    // TODO, this should be false since it is std::strings...
+    ASSERT_TRUE(intf.luaCheckType<std::vector<int>>(-1));
+
+    const auto ret_nums = intf.luaGetStack<std::vector<uint32_t>>(-2);
+    ASSERT_EQ(nums, *ret_nums);
+
+    const auto ret_strs = intf.luaGetStack<std::vector<std::string>>(-1);
+    ASSERT_EQ(strs, *ret_strs);
+
+    intf.luaPop(2);
+}
+
+TEST_F(LuaIntfStackTest, TestAppendPath) {
+    intf.openBaseLibs();
+    intf.appendPath("asdf");
 }

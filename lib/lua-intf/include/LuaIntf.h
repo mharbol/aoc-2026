@@ -11,6 +11,7 @@
 #include <type_traits>
 #include <utility>
 #include <variant>
+#include <vector>
 
 #include <lua.hpp>
 
@@ -24,7 +25,7 @@ namespace lua {
  */
 namespace impl {
 template <typename...>
-constexpr bool dependent_false_v = false; // TODO, maybe this becomes better
+inline constexpr bool dependent_false_v = false; // TODO, maybe this becomes better
 
 template <typename T>
 struct is_optional : std::false_type {};
@@ -34,6 +35,15 @@ struct is_optional<std::optional<U>> : std::true_type {};
 
 template <typename T>
 inline constexpr bool is_optional_v = is_optional<T>::value;
+
+template <typename T>
+struct is_vector : std::false_type {};
+
+template <typename T, typename Allocator>
+struct is_vector<std::vector<T, Allocator>> : std::true_type {};
+
+template <typename T>
+inline constexpr bool is_vector_v = is_vector<T>::value;
 
 template <typename T, typename Variant>
 struct variant_contains : std::false_type {};
@@ -64,7 +74,7 @@ public:
     LuaIntf(LuaIntf &&other) noexcept : L(std::exchange(other.L, nullptr)) {};
     // end rule of 5
 
-    // TODO redo this one
+    // TODO redo this one to actually be a type T
     template <typename T>
     std::expected<T, std::string> getGlobal(const std::string &var);
 
@@ -104,8 +114,17 @@ public:
     template <typename ReturnT>
     std::expected<ReturnT, std::string> popStack();
 
+    template <typename... ReturnT>
+        requires(sizeof...(ReturnT) > 1)
+    std::expected<std::tuple<ReturnT...>, std::string> popStack();
+
     template <typename ReturnT, typename... Args>
     std::expected<ReturnT, std::string> call(const std::string &function, Args... args);
+
+    template <typename... ReturnT, typename... Args>
+        requires(sizeof...(ReturnT) > 1)
+    std::expected<std::tuple<ReturnT...>, std::string> call(const std::string &function,
+        Args... args);
 
     template <typename ReturnT>
     std::expected<ReturnT, std::string> luaGetStack(const int stack_idx);
@@ -117,6 +136,9 @@ public:
 
     template <typename... ReturnT>
     std::expected<std::tuple<ReturnT...>, std::string> popMultiStack();
+
+    template <typename ReturnT>
+    std::vector<ReturnT> luaGetStackVecUnchecked(const int stack_idx);
 
     template <typename T>
     bool luaCheckType(const int stack_idx);
@@ -136,7 +158,7 @@ public:
 
 private:
     template <typename... ReturnT, size_t... Is>
-    std::expected<std::tuple<ReturnT...>, std::string> popMultiStack(
+    std::expected<std::tuple<ReturnT...>, std::string> popMultiStackHelper(
         const std::index_sequence<Is...>);
 
     template <typename ReturnT>

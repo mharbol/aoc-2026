@@ -1,6 +1,5 @@
 
 #include "LuaIntf.h"
-#include "lua.h"
 
 #include <cstddef>
 #include <expected>
@@ -11,6 +10,7 @@
 #include <type_traits>
 #include <utility>
 #include <variant>
+#include <vector>
 
 #include <lua.hpp>
 
@@ -32,7 +32,7 @@ inline void LuaIntf::openBaseLibs() {
     luaopen_base(L);
     luaL_requiref(L, LUA_TABLIBNAME, luaopen_table, 1);
     luaL_requiref(L, LUA_LOADLIBNAME, luaopen_package, 1);
-    luaPop(2);
+    luaPop(3);
 }
 
 inline void LuaIntf::appendPath(const std::string &path) {
@@ -57,17 +57,11 @@ std::expected<std::string, std::string> LuaIntf::getGlobal(const std::string &va
     return ret;
 }
 
+// TODO, do the check that the global exists
 template <typename T>
 std::expected<T, std::string> LuaIntf::getGlobal(const std::string &var) {
-    std::expected<T, std::string> ret;
     lua_getglobal(L, var.c_str());
-    if (lua_isnumber(L, -1)) {
-        ret = static_cast<T>(lua_tonumber(L, -1));
-    } else {
-        ret = std::unexpected(lua_tostring(L, -1));
-    }
-    luaPop(1);
-    return ret;
+    return popStack<T>();
 }
 
 // TODO, specialize for multi push
@@ -141,10 +135,40 @@ std::expected<ReturnT, std::string> LuaIntf::call(const std::string &function, A
     }
 }
 
+template <typename... ReturnT, typename... Args>
+    requires(sizeof...(ReturnT) > 1)
+std::expected<std::tuple<ReturnT...>, std::string> LuaIntf::call(const std::string &function,
+    Args... args) {
+
+    constexpr size_t nargs = sizeof...(Args);
+    constexpr size_t nrets = sizeof...(ReturnT);
+
+    std::expected<std::tuple<ReturnT...>, std::string> ret;
+
+    lua_getglobal(L, function.c_str());
+    if (!lua_isfunction(L, -1)) {
+        ret = std::unexpected(lua_tostring(L, -1));
+        luaPop(1);
+        return ret;
+    }
+
+    ((pushStack(args)), ...);
+
+    if (LUA_OK != lua_pcall(L, nargs, nrets, 0)) {
+        ret = std::unexpected(lua_tostring(L, -1));
+        luaPop(1);
+        return ret;
+    } else {
+        return popStack<ReturnT...>();
+    }
+}
+
 template <typename T>
 inline bool LuaIntf::luaCheckType(const int stack_idx) {
     if constexpr (std::is_null_pointer_v<T>) {
         return lua_isnil(L, stack_idx);
+    } else if constexpr (impl::is_vector_v<T>) {
+        return lua_istable(L, stack_idx);
     } else if constexpr (std::is_same_v<T, bool>) {
         return lua_isboolean(L, stack_idx);
     } else if constexpr (std::is_integral_v<T>) {
@@ -164,6 +188,8 @@ template <typename ReturnT>
 std::expected<ReturnT, std::string> LuaIntf::luaGetStack(const int stack_idx) {
     if constexpr (impl::is_optional_v<ReturnT>) {
         return luaGetStackOptional<typename ReturnT::value_type>(stack_idx);
+    } else if constexpr (impl::is_vector_v<ReturnT>) {
+        return luaGetStackExpected<ReturnT>(stack_idx, "vector");
     } else if constexpr (std::is_same_v<ReturnT, bool>) {
         return luaGetStackExpected<ReturnT>(stack_idx, "bool");
     } else if constexpr (std::is_integral_v<ReturnT>) {
@@ -181,6 +207,8 @@ template <typename ReturnT>
 inline ReturnT LuaIntf::luaGetStackUnchecked(const int stack_idx) {
     if constexpr (std::is_same_v<ReturnT, bool>) {
         return lua_toboolean(L, stack_idx);
+    } else if constexpr (impl::is_vector_v<ReturnT>) {
+        return luaGetStackVecUnchecked<typename ReturnT::value_type>(stack_idx);
     } else if constexpr (std::is_integral_v<ReturnT>) {
         return static_cast<ReturnT>(lua_tointeger(L, stack_idx));
     } else if constexpr (std::is_floating_point_v<ReturnT>) {
@@ -223,24 +251,47 @@ std::expected<ReturnT, std::string> LuaIntf::popStack() {
     return ret;
 }
 
+template <typename... ReturnT>
+    requires(sizeof...(ReturnT) > 1)
+inline std::expected<std::tuple<ReturnT...>, std::string> LuaIntf::popStack() {
+    return popMultiStack<ReturnT...>();
+}
+
 template <>
 std::expected<void, std::string> LuaIntf::popStack() {
     return std::expected<void, std::string>{};
 }
 
+template <typename ReturnT>
+inline std::vector<ReturnT> LuaIntf::luaGetStackVecUnchecked(const int stack_idx) {
+
+    const size_t len = lua_rawlen(L, stack_idx);
+    std::vector<ReturnT> ret{};
+    ret.reserve(len);
+    for (size_t idx = 1; idx <= len; ++idx) {
+        lua_rawgeti(L, stack_idx, idx);
+        ret.push_back(*popStack<ReturnT>());
+    }
+    return ret;
+}
+
 template <typename... ReturnT, size_t... Is>
-inline std::expected<std::tuple<ReturnT...>, std::string> LuaIntf::popMultiStack(
+inline std::expected<std::tuple<ReturnT...>, std::string> LuaIntf::popMultiStackHelper(
     const std::index_sequence<Is...>) {
 
     constexpr size_t nargs = sizeof...(ReturnT);
+
+    static_assert(nargs > 1, "std::tuple return must be greater than 1");
 
     using T = std::tuple<ReturnT...>;
     T ret{};
 
     // check all before filling tuple
-    if ((luaCheckType<std::tuple_element_t<Is, T>>(-1 - static_cast<int>(Is)) && ...)) {
-        ((std::get<Is>(ret) =
-                 luaGetStackUnchecked<std::tuple_element_t<Is, T>>(-1 - static_cast<int>(Is))),
+    if ((luaCheckType<std::tuple_element_t<Is, T>>(
+             static_cast<int>(Is) - static_cast<int>(nargs)) &&
+            ...)) {
+        ((std::get<Is>(ret) = luaGetStackUnchecked<std::tuple_element_t<Is, T>>(
+              static_cast<int>(Is) - static_cast<int>(nargs))),
             ...);
         luaPop(nargs);
         return ret;
@@ -271,7 +322,7 @@ inline std::expected<std::variant<ReturnT...>, std::string> LuaIntf::luaGetStack
 
 template <typename... ReturnT>
 inline std::expected<std::tuple<ReturnT...>, std::string> LuaIntf::popMultiStack() {
-    return popMultiStack<ReturnT...>(std::make_index_sequence<sizeof...(ReturnT)>{});
+    return popMultiStackHelper<ReturnT...>(std::make_index_sequence<sizeof...(ReturnT)>{});
 }
 
 template <typename... ReturnT, size_t... Is>
