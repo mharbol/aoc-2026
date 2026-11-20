@@ -307,5 +307,7 @@ TEST_F(LuaIntfStackTest, TestAppendPathAndDoFile) {
     intf.openBaseLibs();
     intf.appendPath(";../.././lua/?.lua;../.././lua/?/init.lua");
     ASSERT_TRUE(intf.luaDoFile("../../lua/myscript.lua"));
-    auto r = intf.call<uint32_t>("AddStuff", 2, 3);
+    const auto r = intf.call<uint32_t>("AddStuff", 2, 3);
+    ASSERT_TRUE(r.has_value());
+    ASSERT_EQ(5, *r);
 }

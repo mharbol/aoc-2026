@@ -18,6 +18,9 @@ int main() {
     }
 
     intf.luaDoFile("lua/myscript.lua");
+    if (!intf.luaDoFile("lua/solve.lua")) {
+        std::cerr << "ahhhhh!!!!" << std::endl;
+    }
 
     std::cout << "from file: " << *intf.getGlobal<std::string>("a") << std::endl;
 
