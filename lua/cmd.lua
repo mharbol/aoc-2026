@@ -85,16 +85,17 @@ end
 ---@return integer day the day
 ---@return integer part the part
 ---@return string file the file
+---@return string err any error
 function parse_args(args)
     local opts = {
         day = -1,
         part = -1,
         file = "",
-        err = nil,
+        err = "",
     }
 
     local idx = 1
-    while idx <= #args and nil == opts.err do
+    while idx <= #args and "" == opts.err do
         local curr_arg = args[idx]
         if "-d" == curr_arg then
             parse_day(opts, args, idx)
@@ -111,8 +112,5 @@ function parse_args(args)
         idx = idx + 1
     end
 
-    if opts.err then
-        io.stderr:write(opts.err .. "\n")
-    end
-    return opts.day, opts.part, opts.file
+    return opts.day, opts.part, opts.file, opts.err
 end

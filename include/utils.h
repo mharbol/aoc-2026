@@ -8,6 +8,8 @@ namespace aoc {
 
 std::vector<std::string> readInput(const std::string &file_path);
 
+bool isValidFile(const std::string &file_path);
+
 } // namespace aoc
 
 #endif // _AOC_FILE_READ_H_

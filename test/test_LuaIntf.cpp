@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <gtest/gtest.h>
 #include <optional>
+#include <string>
 #include <tuple>
 #include <vector>
 
@@ -167,11 +168,11 @@ TEST_F(LuaIntfTest, TestLuaGetStack) {
     intf.pushStack(false);   // -2
     intf.pushStack(10);      // -1
 
-    auto ret1 = intf.luaGetStack<int>(-1);
+    const auto ret1 = intf.luaGetStack<int>(-1);
     ASSERT_TRUE(ret1.has_value()) << "Expect ret1 should be a value: " << ret1.error();
     ASSERT_EQ(10, ret1.value());
 
-    auto ret1_optional = intf.luaGetStack<std::optional<int>>(-1);
+    const auto ret1_optional = intf.luaGetStack<std::optional<int>>(-1);
     ASSERT_TRUE(ret1_optional.has_value())
         << "Expect ret1_option should be a value: " << ret1_optional.error();
     ASSERT_EQ(10, ret1_optional.value());

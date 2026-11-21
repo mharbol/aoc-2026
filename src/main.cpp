@@ -5,6 +5,7 @@
 #include <string>
 
 #include "LuaIntf.h"
+#include "utils.h"
 
 int main(const int argc, const char **argv) {
 
@@ -24,18 +25,31 @@ int main(const int argc, const char **argv) {
 
     const std::vector<std::string> cmd_args(argv + 1, argv + argc);
 
-    auto parse_result = intf.call<int32_t, int32_t, std::string>(parse_args_func, cmd_args);
+    auto parse_result =
+        intf.call<int32_t, int32_t, std::string, std::string>(parse_args_func, cmd_args);
     if (!parse_result.has_value()) {
         std::cerr << "Error while executing " << parse_args_func
                   << "(): " << parse_result.error() << std::endl;
         return 1;
     }
 
-    const auto [day, part, file] = std::move(*parse_result);
+    const auto [day, part, file, err] = std::move(*parse_result);
 
-    std::cout << day << " " << part << " " << file << std::endl;
+    if (!err.empty()) {
+        std::cerr << err << std::endl;
+        return 1;
+    }
+
+    if (!aoc::isValidFile(file)) {
+        std::cerr << "Could not read input file: \"" << file << "\"" << std::endl;
+        return 1;
+    }
+
+    const std::vector<std::string> lines = aoc::readInput(file);
 
     // Kinda messing around
+    std::cout << day << " " << part << " " << file << " " << err << std::endl;
+
     if (!intf.luaDoString("print(require('solve').run_problem(1,1,{'hat', 'cat'}))")) {
         std::cerr << "ahhhhh again!!!!" << std::endl;
     }
