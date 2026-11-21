@@ -17,7 +17,11 @@
 namespace lua {
 
 inline bool LuaIntf::luaDoString(const std::string &cmd) {
-    return LUA_OK == luaL_dostring(L, cmd.c_str());
+    const auto ok = LUA_OK == luaL_dostring(L, cmd.c_str());
+    if (!ok) {
+        luaPop(1);
+    }
+    return ok;
 }
 
 inline bool LuaIntf::luaDoFile(const std::string &file) {
@@ -40,7 +44,9 @@ inline void LuaIntf::openBaseLibs() {
     luaopen_base(L);
     luaL_requiref(L, LUA_TABLIBNAME, luaopen_table, 1);
     luaL_requiref(L, LUA_LOADLIBNAME, luaopen_package, 1);
-    luaPop(3);
+    luaL_requiref(L, LUA_MATHLIBNAME, luaopen_math, 1);
+    luaL_requiref(L, LUA_IOLIBNAME, luaopen_io, 1);
+    luaPop(5);
 }
 
 inline void LuaIntf::appendPath(const std::string &path) {

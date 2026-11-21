@@ -1,28 +1,47 @@
+#include <cstdint>
+#include <expected>
 #include <iostream>
+#include <ostream>
 #include <string>
 
 #include "LuaIntf.h"
 
-int main() {
+int main(const int argc, const char **argv) {
+
+    constexpr auto exec_path = ";./lua/?.lua;./lua/?/init.lua";
+    constexpr auto cmd_file = "lua/cmd.lua";
+    constexpr auto parse_args_func = "parse_args";
 
     lua::LuaIntf intf{};
     intf.openBaseLibs();
-    intf.appendPath(";./lua/?.lua;./lua/?/init.lua");
+    intf.appendPath(exec_path);
 
-    const std::string cmd = "local b = 7\na = b + 11";
-    const auto ok = intf.luaDoString(cmd);
-
-    if (!ok) {
-        const std::string err = lua_tostring(intf.getL(), -1);
-        std::cerr << err << std::endl;
+    if (!intf.luaDoFile(cmd_file)) {
+        std::cerr << "Could not execute command file \"" << cmd_file
+                  << "\". Does it exist or are the errors in it?" << std::endl;
+        return 1;
     }
 
+    const std::vector<std::string> cmd_args(argv + 1, argv + argc);
+
+    auto parse_result = intf.call<int32_t, int32_t, std::string>(parse_args_func, cmd_args);
+    if (!parse_result.has_value()) {
+        std::cerr << "Error while executing " << parse_args_func
+                  << "(): " << parse_result.error() << std::endl;
+        return 1;
+    }
+
+    const auto [day, part, file] = std::move(*parse_result);
+
+    std::cout << day << " " << part << " " << file << std::endl;
+
+    // Kinda messing around
+    if (!intf.luaDoString("print(require('solve').run_problem(1,1,{'hat', 'cat'}))")) {
+        std::cerr << "ahhhhh again!!!!" << std::endl;
+    }
+
+    // Messing around...
     intf.luaDoFile("lua/myscript.lua");
-    if (!intf.luaDoFile("lua/solve.lua")) {
-        std::cerr << "ahhhhh!!!!" << std::endl;
-    }
-
-    std::cout << "from file: " << *intf.getGlobal<std::string>("a") << std::endl;
 
     const std::string add_stuff = "AddStuff";
     constexpr float a = 3.5f;

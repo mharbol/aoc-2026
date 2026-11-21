@@ -6,7 +6,7 @@ local M = {}
 ---@param part integer the part to solve
 ---@param lines string[] the lines in the problem
 ---@return integer|string solution the solution
-function M.runProblem(day, part, lines)
+function M.run_problem(day, part, lines)
     local cases = {
         { -- index 1
             require("solution.day01").part1,
