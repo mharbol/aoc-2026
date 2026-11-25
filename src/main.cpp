@@ -12,6 +12,7 @@ int main(const int argc, const char **argv) {
     constexpr auto exec_path = ";./lua/?.lua;./lua/?/init.lua";
     constexpr auto cmd_file = "lua/cmd.lua";
     constexpr auto parse_args_func = "parse_args";
+    constexpr auto run_problem_func = "run_problem";
 
     lua::LuaIntf intf{};
     intf.openBaseLibs();
@@ -47,7 +48,7 @@ int main(const int argc, const char **argv) {
 
     const std::vector<std::string> lines = aoc::readInput(file);
 
-    const auto solution = intf.call<std::string>("run_problem", day, part, lines);
+    const auto solution = intf.call<std::string>(run_problem_func, day, part, lines);
 
     if (!solution.has_value()) {
         std::cerr << "Error while running solution: " << solution.error() << std::endl;
