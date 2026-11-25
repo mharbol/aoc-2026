@@ -31,7 +31,18 @@ end
 ---@param lines string[] the lines of the problem
 ---@return integer|string solution the solution
 function M.part2(lines)
-    return "" -- TODO
+    local state = 50
+    local count = 0
+    for _, add in ipairs(parse_iter(lines)) do
+        local old_state = state
+        count = count + math.abs(add) // 100
+        state = state + math.fmod(add, 100)
+        if 0 == state or 0 ~= old_state and (0 > state or 100 <= state) then
+            count = count + 1
+        end
+        state = state % 100
+    end
+    return count
 end
 
 return M
