@@ -47,29 +47,14 @@ int main(const int argc, const char **argv) {
 
     const std::vector<std::string> lines = aoc::readInput(file);
 
-    // Kinda messing around
-    std::cout << day << " " << part << " " << file << " " << err << std::endl;
+    const auto solution = intf.call<std::string>("run_problem", day, part, lines);
 
-    if (!intf.luaDoString("print(require('solve').run_problem(1,1,{'hat', 'cat'}))")) {
-        std::cerr << "ahhhhh again!!!!" << std::endl;
+    if (!solution.has_value()) {
+        std::cerr << "Error while running solution: " << solution.error() << std::endl;
+        return 1;
     }
 
-    // Messing around...
-    intf.luaDoFile("lua/myscript.lua");
-
-    const std::string add_stuff = "AddStuff";
-    constexpr float a = 3.5f;
-    constexpr float b = 7.1f;
-
-    const auto ret = intf.call<float>("AddStuff", a, b).value();
-    std::cout << "Called AddStuff with a = " << a << " and b = " << b
-              << " and got return: " << ret << "." << std::endl;
-
-    const std::string other_func = "MySort";
-    static_cast<void>(*intf.call<void>("MySort"));
-
-    constexpr auto path_func = "PrintPath";
-    static_cast<void>(*intf.call<void>(path_func));
+    std::cout << solution.value() << std::endl;
 
     return 0;
 }

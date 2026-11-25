@@ -1,3 +1,5 @@
+local solve = require('solve')
+
 --- Parse an integer
 ---@param str string the string representing the integer
 ---@param curr_num integer the current value of the integer
@@ -80,6 +82,16 @@ local function parse_file(opts, args, idx)
     end
 end
 
+--- Validate the command line arguments
+---@param opts table the parsed arguments
+---@return integer day the day
+---@return integer part the part
+---@return string file the file
+---@return string err any error
+local function validate_args(opts)
+    return opts.day, opts.part, opts.file, opts.err
+end
+
 --- Parse the command line arguments
 ---@param args string[] the arguments
 ---@return integer day the day
@@ -112,5 +124,15 @@ function parse_args(args)
         idx = idx + 1
     end
 
-    return opts.day, opts.part, opts.file, opts.err
+    return validate_args(opts)
+end
+
+--- Solve the day and part problem for the given lines.
+--- This requires that the day and part have been validated.
+---@param day integer the day's number
+---@param part integer the part to solve
+---@param lines string[] the lines in the problem
+---@return integer|string solution the solution
+function run_problem(day, part, lines)
+    return solve.run_problem(day, part, lines)
 end
